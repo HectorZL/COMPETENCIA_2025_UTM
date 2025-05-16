@@ -189,6 +189,26 @@ def agendar_cita_view(request):
             messages.add_message(request, constants.ERROR, 'El médico no existe')
             
     return redirect('dashboard')
+def agregarHorarioView(request):
+    return render(request, 'agregarHorarios.html')
+@login_required
+def agregarHorario(request):
+    id = request.session.get('user_id')
+    medico_id = Medico.objects.get(MedicoID=id)
+    fecha = request.POST.get('fecha')
+    hora_inicio = request.POST.get('hora-inicio')
+    hora_final = request.POST.get('hora-final')
+    Horario = HorarioMedico(
+        MedicoID=medico_id,
+        DiaSemana=fecha,
+        HoraInicio=hora_inicio,
+        HoraFin=hora_final,
+    )
+    Horario.save()
+    return redirect('dashboard')
+
+
+
 
 @login_required
 def obtener_horarios_disponibles(request):
