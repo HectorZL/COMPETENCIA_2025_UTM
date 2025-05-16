@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.contrib.messages import constants
 from django.urls import reverse
 from django.db.models import Count, Q
+import re
 
 # Middleware para verificar autenticación
 def login_required(view_func):
@@ -46,6 +47,53 @@ def login_view(request):
                 except Paciente.DoesNotExist:
                     messages.add_message(request, constants.ERROR, 'El correo no existe!')
     return render(request, 'login.html')
+
+def register_view(request):
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        email = request.POST.get('email')
+        telefono = request.POST.get('telefono')
+        genero = request.POST.get('genero')
+        fecha_nacimiento = request.POST.get('fecha_nacimiento')
+        password = request.POST.get('password')
+        
+        # Validaciones
+        if not nombre or not email or not telefono or not password:
+            messages.add_message(request, constants.ERROR, 'Todos los campos marcados son obligatorios')
+            return redirect('register')
+        
+        # Validar formato de teléfono (debe comenzar con 09 y tener 10 dígitos)
+        if not re.match(r'^09\d{8}$', telefono):
+            messages.add_message(request, constants.ERROR, 'El número de teléfono debe comenzar con 09 y tener 10 dígitos')
+            return redirect('register')
+        
+        # Verificar si el correo ya existe
+        if Paciente.objects.filter(Email=email).exists() or Medico.objects.filter(Email=email).exists():
+            messages.add_message(request, constants.ERROR, 'El correo electrónico ya está registrado')
+            return redirect('register')
+        
+        # Crear el paciente
+        paciente = Paciente(
+            Nombre=nombre,
+            Email=email,
+            Telefono=telefono,
+            Genero=genero,
+            TipoUsuario='Paciente'
+        )
+        
+        # Añadir fecha de nacimiento si está presente
+        if fecha_nacimiento:
+            paciente.FechaNacimiento = fecha_nacimiento
+        
+        # Establecer contraseña
+        paciente.set_password(password)
+        paciente.save()
+        
+        messages.add_message(request, constants.SUCCESS, 'Registro exitoso! Ahora puedes iniciar sesión')
+        return redirect('login')
+    
+    # Si es GET, mostrar el formulario de registro
+    return render(request, 'register.html')
 
 def logout_view(request):
     if 'user_id' in request.session:

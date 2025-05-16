@@ -1,43 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        /* Improved accessibility styles */
+        :root {
+            --text-base-size: 1.05rem;
+            --text-line-height: 1.5;
+            --heading-line-height: 1.3;
+            --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        html {
+            font-size: var(--text-base-size);
+            line-height: var(--text-line-height);
+            font-family: var(--font-family);
+        }
+        
+        h1, h2, h3, h4, h5 {
+            line-height: var(--heading-line-height);
+            font-weight: 700;
+        }
+        
+        label, input, button, p, a, span {
+            font-family: var(--font-family);
+        }
+        
+        /* High contrast focus states */
+        *:focus {
+            outline: 3px solid #4361ee !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Increase contrast for text */
+        .text-gray-900 {
+            color: #111827 !important;
+        }
+        
+        .text-gray-600, .text-gray-500 {
+            color: #4B5563 !important;
+        }
+        
+        /* Increased touch targets */
+        button, a, input, select {
+            min-height: 44px;
+        }
+        
+        /* Proper link underlines */
+        a:not(.btn):not(.no-underline) {
+            text-decoration: underline;
+            text-underline-offset: 0.2em;
+        }
+    </style>
     {% block 'head' %}{% endblock 'head' %}
 </head>
-<body>
+<body class="antialiased">
+    {% if request.path != '/login/' and request.path != '/register/' %}
     <header class="bg-slate-50">
         <nav class="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
           <div class="flex lg:flex-1">
-            <a href="#" class="-m-1.5 p-1.5">
-              <img class="h-8 w-auto" src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600" alt="">
+            <a href="#" class="-m-1.5 p-1.5 no-underline">
+              <img class="h-8 w-auto" src="https://cdn-icons-png.flaticon.com/512/8324/8324577.png" alt="Medical App">
             </a>
           </div>
           <div class="flex lg:hidden">
-            <button type="button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700">
-              <span class="sr-only">Open main menu</span>
+            <button type="button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700" aria-expanded="false">
+              <span class="sr-only">Abrir menú principal</span>
               <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
               </svg>
             </button>
           </div>
           <div class="hidden lg:flex lg:gap-x-12">
-            <a href="{% url 'patients' %}" class="text-sm/6 font-semibold text-gray-900">Pacientes</a>
+            <a href="{% url 'patients' %}" class="text-base font-semibold text-gray-900 no-underline hover:underline">Pacientes</a>
+            <a href="{% url 'dashboard' %}" class="text-base font-semibold text-gray-900 no-underline hover:underline">Dashboard</a>
           </div>
           <div class="hidden lg:flex lg:flex-1 lg:justify-end">
             {% if request.session.user_id %}
               <div class="flex items-center gap-x-4">
-                <span class="text-sm/6 font-semibold text-gray-900">{{ request.session.user_name }}</span>
-                <a href="{% url 'logout' %}" class="text-sm/6 font-semibold text-indigo-600 hover:text-indigo-500">Cerrar sesión</a>
+                <span class="text-base font-semibold text-gray-900">{{ request.session.user_name }}</span>
+                <a href="{% url 'logout' %}" class="text-base font-semibold text-indigo-600 hover:text-indigo-500 no-underline hover:underline">Cerrar sesión</a>
               </div>
             {% else %}
-              <a href="{% url 'login' %}" class="text-sm/6 font-semibold text-indigo-600 hover:text-indigo-500">Iniciar sesión</a>
+              <a href="{% url 'login' %}" class="text-base font-semibold text-indigo-600 hover:text-indigo-500 no-underline hover:underline">Iniciar sesión</a>
             {% endif %}
           </div>
         </nav>
-    
-      </header>
+    </header>
+    {% endif %}
 
     {% block 'body' %}{% endblock 'body' %}
 </body>
