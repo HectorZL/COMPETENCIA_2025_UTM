@@ -373,3 +373,88 @@ def public_consult(request, id):
         return render(request, 'public_consult.html', {'historia': historia})
     except HistoriaClinica.DoesNotExist:
         raise Http404("Historia clínica no encontrada")
+
+@login_required
+def edit_profile_view(request):
+    """
+    Vista para editar el perfil del usuario (médico o paciente)
+    """
+    user_type = request.session.get('user_type')
+    user_id = request.session.get('user_id')
+    
+    # Obtener el usuario actual según su tipo
+    if user_type == 'Medico':
+        user = Medico.objects.get(MedicoID=user_id)
+        is_doctor = True
+    else:
+        user = Paciente.objects.get(PacienteID=user_id)
+        is_doctor = False
+    
+    if request.method == 'POST':
+        # Datos comunes para ambos tipos de usuario
+        nombre = request.POST.get('nombre')
+        email = request.POST.get('email')
+        telefono = request.POST.get('telefono')
+        password = request.POST.get('password')
+        
+        # Validaciones básicas
+        if not nombre or not email or not telefono:
+            messages.add_message(request, constants.ERROR, 'Todos los campos marcados son obligatorios')
+            return redirect('edit_profile')
+        
+        # Validar que el email no esté en uso por otro usuario
+        if is_doctor:
+            email_exists = Medico.objects.filter(Email=email).exclude(MedicoID=user_id).exists() or \
+                           Paciente.objects.filter(Email=email).exists()
+        else:
+            email_exists = Paciente.objects.filter(Email=email).exclude(PacienteID=user_id).exists() or \
+                           Medico.objects.filter(Email=email).exists()
+        
+        if email_exists:
+            messages.add_message(request, constants.ERROR, 'El correo electrónico ya está registrado')
+            return redirect('edit_profile')
+        
+        # Validar formato de teléfono (debe comenzar con 09 y tener 10 dígitos)
+        if telefono and not re.match(r'^09\d{8}$', telefono):
+            messages.add_message(request, constants.ERROR, 'El número de teléfono debe comenzar con 09 y tener 10 dígitos')
+            return redirect('edit_profile')
+        
+        # Actualizar datos comunes
+        user.Nombre = nombre
+        user.Email = email
+        user.Telefono = telefono
+        
+        # Actualizar contraseña si se proporciona
+        if password:
+            user.set_password(password)
+        
+        # Datos específicos para médicos o pacientes
+        if is_doctor:
+            especialidad = request.POST.get('especialidad')
+            if especialidad:
+                user.Especialidad = especialidad
+        else:
+            genero = request.POST.get('genero')
+            fecha_nacimiento = request.POST.get('fecha_nacimiento')
+            
+            if genero:
+                user.Genero = genero
+            if fecha_nacimiento:
+                user.FechaNacimiento = fecha_nacimiento
+        
+        # Guardar cambios
+        user.save()
+        
+        # Actualizar el nombre en la sesión
+        request.session['user_name'] = user.Nombre
+        
+        messages.add_message(request, constants.SUCCESS, 'Perfil actualizado con éxito')
+        return redirect('dashboard')
+    
+    # Para solicitudes GET, mostrar el formulario con los datos actuales
+    context = {
+        'user': user,
+        'is_doctor': is_doctor
+    }
+    
+    return render(request, 'edit_profile.html', context)
