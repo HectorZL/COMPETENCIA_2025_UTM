@@ -66,7 +66,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': BASE_DIR / 'db.postgres',
+        'NAME': 'defaultdb',  # Usando el nombre de la base de datos proporcionado
+        'USER': 'avnadmin',    # Usando el usuario proporcionado
+        'PASSWORD': 'AVNS_GA-5EPkklpy3F117EAF',  # Usando la contraseña proporcionada
+        'HOST': 'pg-936fe8-competenciautm123.h.aivencloud.com',  # Usando el host proporcionado
+        'PORT': '17550',      # Usando el puerto proporcionado
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
