@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.contrib.auth.hashers import make_password, check_password
 
 class Medico(models.Model):
     MedicoID = models.AutoField(primary_key=True)
@@ -7,9 +8,16 @@ class Medico(models.Model):
     Especialidad = models.CharField(max_length=100, blank=True, null=True)
     Email = models.EmailField(unique=True)
     Telefono = models.CharField(max_length=20, blank=True, null=True)
+    Password = models.CharField(max_length=128)  # Campo para la contraseña
 
     def __str__(self):
         return self.Nombre
+    
+    def set_password(self, raw_password):
+        self.Password = make_password(raw_password)
+        
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.Password)
 
 class HorarioMedico(models.Model):
     HorarioID = models.AutoField(primary_key=True)
@@ -51,9 +59,24 @@ class Paciente(models.Model):
     )
     Email = models.EmailField(unique=True)
     Telefono = models.CharField(max_length=20, blank=True, null=True)
+    Password = models.CharField(max_length=128)  # Campo para la contraseña
+    TipoUsuario = models.CharField(
+        max_length=10,
+        choices=[
+            ('Paciente', 'Paciente'),
+            ('Medico', 'Medico'),
+        ],
+        default='Paciente'
+    )
 
     def __str__(self):
         return self.Nombre
+        
+    def set_password(self, raw_password):
+        self.Password = make_password(raw_password)
+        
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.Password)
 
 class Cita(models.Model):
     CitaID = models.AutoField(primary_key=True)

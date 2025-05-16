@@ -38,7 +38,7 @@
 
             <form action="{% url 'patients' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-                <label for="name" class="block mt-2 text-sm/6 font-medium text-gray-600">Nome</label>
+                <label for="name" class="block mt-2 text-sm/6 font-medium text-gray-600">Nombre</label>
                 <div class="mt-2">
                     <input type="text" name="name" id="name" autocomplete="given-name" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                 </div>
@@ -48,45 +48,44 @@
                     <input type="email" name="email" id="email" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                 </div>
 
-                <label for="phone" class="block mt-2 text-sm/6 font-medium text-gray-600">Telefono</label>
+                <label for="phone" class="block mt-2 text-sm/6 font-medium text-gray-600">Teléfono</label>
                 <div class="mt-2">
                     <input type="text" name="phone" id="phone" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label for="conditions" class="block mt-2 text-sm/6 font-medium text-gray-600">Queja</label>
+                        <label for="gender" class="block mt-2 text-sm/6 font-medium text-gray-600">Género</label>
                         <div class="mt-2">
-                            <select name="conditions" class="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-                                
-                                {% for conditon in conditions %}
-                                    <option value="{{conditon.0}}">{{conditon.0}}</option>
-                                {% endfor%}
-                                
+                            <select name="gender" class="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                                <option value="Otro">Otro</option>
                             </select>
-                            
                         </div>
                     </div>
 
                     <div>
-                        <label for="picture" class="block mt-2 text-sm/6 font-medium text-gray-600">Foto</label>
+                        <label for="birth_date" class="block mt-2 text-sm/6 font-medium text-gray-600">Fecha de nacimiento</label>
                         <div class="mt-2">
-                            <input type="file" required name="picture" id="picture" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                            <input type="date" name="birth_date" id="birth_date" class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
                         </div>
                     </div>
                     
                 </div>
-                <button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 mt-4 cursor-pointer px-3 py-2 w-full text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Cadastrar paciente</button>
+                <button type="submit" class="inline-flex justify-center rounded-md bg-indigo-600 mt-4 cursor-pointer px-3 py-2 w-full text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Registrar paciente</button>
             </form>
         </div>
           <ul role="list" class="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
                 {% for patient in patients %}
                     <li>
                         <div class="flex items-center gap-x-6">
-                            <img class="size-16 rounded-full" src="{{patient.picture.url}}" alt="">
+                            <div class="flex items-center justify-center size-16 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xl">
+                                {{ patient.Nombre|slice:":1" }}
+                            </div>
                             <div>
-                            <a href="{% url 'patient_view' patient.id %}" class="text-base/7 font-semibold tracking-tight text-gray-900">{{patient.name}}</a>
-                            <p class="text-sm/6 font-semibold text-indigo-600">{{patient.conditions}}</p>
+                            <a href="{% url 'patient_view' patient.PacienteID %}" class="text-base/7 font-semibold tracking-tight text-gray-900">{{ patient.Nombre }}</a>
+                            <p class="text-sm/6 font-semibold text-indigo-600">{{ patient.Email }}</p>
                             </div>
                         </div>
                     </li>

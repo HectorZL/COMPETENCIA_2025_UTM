@@ -26,7 +26,14 @@
             <a href="{% url 'patients' %}" class="text-sm/6 font-semibold text-gray-900">Pacientes</a>
           </div>
           <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-
+            {% if request.session.user_id %}
+              <div class="flex items-center gap-x-4">
+                <span class="text-sm/6 font-semibold text-gray-900">{{ request.session.user_name }}</span>
+                <a href="{% url 'logout' %}" class="text-sm/6 font-semibold text-indigo-600 hover:text-indigo-500">Cerrar sesión</a>
+              </div>
+            {% else %}
+              <a href="{% url 'login' %}" class="text-sm/6 font-semibold text-indigo-600 hover:text-indigo-500">Iniciar sesión</a>
+            {% endif %}
           </div>
         </nav>
     

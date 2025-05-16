@@ -24,7 +24,7 @@ Medical Manager is a management system for healthcare professionals, developed i
 1. Clone the repository
 
 ```bash
-git clone https://github.com/Emicy963/medical-manager.git
+git clone 
 cd medical-manager
 ```
 
@@ -119,4 +119,4 @@ This project is under the MIT license. View the archive `LICENSE` for more detai
 
 ## 👥 Author
 
-Cafu Dev - [Emicy963](https://github.com/Emicy963)
+
