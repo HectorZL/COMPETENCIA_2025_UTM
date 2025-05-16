@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block 'head' %}
+<title>Dashboard - {% if request.session.user_type == 'Medico' %}Médico{% else %}Paciente{% endif %}</title>
+<style>
+  .dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  .dashboard-section {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+  }
+  .col-span-8 {
+    grid-column: span 8 / span 8;
+  }
+  .col-span-4 {
+    grid-column: span 4 / span 4;
+  }
+  .col-span-6 {
+    grid-column: span 6 / span 6;
+  }
+  .col-span-12 {
+    grid-column: span 12 / span 12;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  table th, table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background-color: #4f46e5;
+    color: white;
+  }
+  .btn-primary:hover {
+    background-color: #4338ca;
+  }
+  .btn-secondary {
+    background-color: #f3f4f6;
+    color: #1f2937;
+  }
+  .btn-secondary:hover {
+    background-color: #e5e7eb;
+  }
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-success {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+  .badge-warning {
+    background-color: #fef9c3;
+    color: #854d0e;
+  }
+  .badge-error {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+  .badge-info {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+  .hide {
+    display: none;
+  }
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+  }
+</style>
+{% endblock 'head' %}
+
+{% block 'body' %}
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1 class="text-3xl font-bold">
+      Dashboard - 
+      {% if request.session.user_type == 'Medico' %}
+        Médico
+      {% else %}
+        Paciente
+      {% endif %}
+    </h1>
+    <div>
+      <span class="font-semibold">Bienvenido, {{ request.session.user_name }}</span>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="rounded-md {{message.tags}} mb-4">
+        <div class="flex">
+          <div class="ml-3 py-4">
+            {{message}}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Secciones específicas para médicos -->
+  {% if request.session.user_type == 'Medico' %}
+    <div class="dashboard-grid">
+      <!-- Sección de Disponibilidad y Horarios -->
+      <div class="col-span-8">
+        <div class="dashboard-section">
+          <h2 class="text-xl font-semibold mb-4">Disponibilidad y Horarios</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Día</th>
+                <th>Hora Inicio</th>
+                <th>Hora Fin</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for horario in horarios %}
+              <tr>
+                <td>{{ horario.DiaSemana }}</td>
+                <td>{{ horario.HoraInicio }}</td>
+                <td>{{ horario.HoraFin }}</td>
+                <td class="action-buttons">
+                  <button class="btn btn-secondary">Editar</button>
+                  <button class="btn btn-secondary">Eliminar</button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-4">No hay horarios configurados</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="mt-4">
+            <button class="btn btn-primary">Agregar Horario</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Resumen -->
+      <div class="col-span-4">
+        <div class="dashboard-section">
+          <h2 class="text-xl font-semibold mb-4">Resumen</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-gray-50 p-4 rounded">
+              <span class="text-sm text-gray-500">Citas Pendientes</span>
+              <p class="text-2xl font-bold">{{ citas_pendientes|default:"0" }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+              <span class="text-sm text-gray-500">Citas Hoy</span>
+              <p class="text-2xl font-bold">{{ citas_hoy|default:"0" }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+              <span class="text-sm text-gray-500">Total Pacientes</span>
+              <p class="text-2xl font-bold">{{ total_pacientes|default:"0" }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+              <span class="text-sm text-gray-500">Consultas Este Mes</span>
+              <p class="text-2xl font-bold">{{ consultas_mes|default:"0" }}</p>
+            </div>
+          </div>
+          <div class="mt-4">
+            <button class="btn btn-primary w-full">Generar Reporte</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Citas Programadas -->
+      <div class="col-span-12">
+        <div class="dashboard-section">
+          <h2 class="text-xl font-semibold mb-4">Citas Programadas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Paciente</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cita in citas %}
+              <tr>
+                <td>{{ cita.PacienteID.Nombre }}</td>
+                <td>{{ cita.FechaCita }}</td>
+                <td>{{ cita.HoraCita }}</td>
+                <td>{{ cita.MedioCita }}</td>
+                <td>
+                  {% if cita.Estado == 'Pendiente' %}
+                    <span class="badge badge-warning">Pendiente</span>
+                  {% elif cita.Estado == 'Confirmada' %}
+                    <span class="badge badge-success">Confirmada</span>
+                  {% elif cita.Estado == 'Cancelada' %}
+                    <span class="badge badge-error">Cancelada</span>
+                  {% elif cita.Estado == 'Completada' %}
+                    <span class="badge badge-info">Completada</span>
+                  {% endif %}
+                </td>
+                <td class="action-buttons">
+                  <button class="btn btn-secondary">Ver Detalles</button>
+                  <button class="btn btn-primary">Atender</button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-4">No hay citas programadas</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  <!-- Secciones específicas para pacientes -->
+  {% else %}
+    <div class="dashboard-grid">
+      <!-- Agendar Cita -->
+      <div class="col-span-8">
+        <div class="dashboard-section">
+          <h2 class="text-xl font-semibold mb-4">Agendar Cita</h2>
+          <form method="post" action="{% url 'agendar_cita' %}">
+            {% csrf_token %}
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-group">
+                <label for="medico">Médico</label>
+                <select name="medico" id="medico" class="form-control" required>
+                  <option value="">Seleccione un médico</option>
+                  {% for medico in medicos %}
+                    <option value="{{ medico.MedicoID }}">{{ medico.Nombre }} - {{ medico.Especialidad }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="fecha">Fecha</label>
+                <input type="date" name="fecha" id="fecha" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="hora">Hora</label>
+                <select name="hora" id="hora" class="form-control" required>
+                  <option value="">Seleccione una hora</option>
+                  <!-- Las horas disponibles se cargarán dinámicamente -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="tipo">Tipo de Consulta</label>
+                <select name="tipo" id="tipo" class="form-control" required>
+                  <option value="Presencial">Presencial</option>
+                  <option value="Virtual">Virtual</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="sintomas">Síntomas o Motivo de Consulta</label>
+              <textarea name="sintomas" id="sintomas" rows="3" class="form-control"></textarea>
+            </div>
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary">Agendar Cita</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Sección de Resumen -->
+      <div class="col-span-4">
+        <div class="dashboard-section">
+          <h2 class="text-xl font-semibold mb-4">Resumen</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-gray-50 p-4 rounded">
+              <span class="text-sm text-gray-500">Citas Pendientes</span>
+              <p class="text-2xl font-bold">{{ citas_pendientes|default:"0" }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+              <span class="text-sm text-gray-500">Próxima Cita</span>
+              <p class="text-sm font-bold">{{ proxima_cita.FechaCita|default:"Sin citas" }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded col-span-2">
+              <span class="text-sm text-gray-500">Historia Clínica</span>
+              <p class="text-2xl font-bold">{{ total_consultas|default:"0" }} consultas</p>
+            </div>
+          </div>
+          <div class="mt-4">
+            <button class="btn btn-primary w-full">Generar Reporte</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mis Citas -->
+      <div class="col-span-12">
+        <div class="dashboard-section">
+          <h2 class="text-xl font-semibold mb-4">Mis Citas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Médico</th>
+                <th>Especialidad</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cita in citas %}
+              <tr>
+                <td>{{ cita.MedicoID.Nombre }}</td>
+                <td>{{ cita.MedicoID.Especialidad }}</td>
+                <td>{{ cita.FechaCita }}</td>
+                <td>{{ cita.HoraCita }}</td>
+                <td>{{ cita.MedioCita }}</td>
+                <td>
+                  {% if cita.Estado == 'Pendiente' %}
+                    <span class="badge badge-warning">Pendiente</span>
+                  {% elif cita.Estado == 'Confirmada' %}
+                    <span class="badge badge-success">Confirmada</span>
+                  {% elif cita.Estado == 'Cancelada' %}
+                    <span class="badge badge-error">Cancelada</span>
+                  {% elif cita.Estado == 'Completada' %}
+                    <span class="badge badge-info">Completada</span>
+                  {% endif %}
+                </td>
+                <td class="action-buttons">
+                  <button class="btn btn-secondary">Ver Detalles</button>
+                  {% if cita.Estado == 'Pendiente' %}
+                    <button class="btn btn-primary">Cancelar</button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4">No tienes citas programadas</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Historia Clínica -->
+      <div class="col-span-12">
+        <div class="dashboard-section">
+          <h2 class="text-xl font-semibold mb-4">Mi Historia Clínica</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Médico</th>
+                <th>Especialidad</th>
+                <th>Diagnóstico</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for historia in historias %}
+              <tr>
+                <td>{{ historia.FechaConsulta }}</td>
+                <td>{{ historia.MedicoID.Nombre }}</td>
+                <td>{{ historia.MedicoID.Especialidad }}</td>
+                <td>{{ historia.Diagnostico|truncatechars:50 }}</td>
+                <td class="action-buttons">
+                  <button class="btn btn-secondary">Ver Detalles</button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4">No hay registros en tu historia clínica</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock 'body' %} 
