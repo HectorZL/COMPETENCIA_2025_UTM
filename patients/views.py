@@ -96,11 +96,20 @@ def register_view(request):
     return render(request, 'register.html')
 
 def logout_view(request):
-    if 'user_id' in request.session:
-        del request.session['user_id']
-        del request.session['user_type']
-        del request.session['user_name']
-    return redirect('login')
+    """
+    Vista para confirmar y realizar el cierre de sesión
+    """
+    if request.method == 'POST':
+        # Si es POST, se confirma el cierre de sesión
+        if 'user_id' in request.session:
+            del request.session['user_id']
+            del request.session['user_type']
+            del request.session['user_name']
+        messages.add_message(request, constants.SUCCESS, 'Has cerrado sesión exitosamente')
+        return redirect('login')
+    else:
+        # Si es GET, mostrar la página de confirmación
+        return render(request, 'logout.html')
 
 @login_required
 def dashboard_view(request):
@@ -265,6 +274,7 @@ def obtener_horarios_disponibles(request):
     """
     medico_id = request.GET.get('medico_id')
     fecha = request.GET.get('fecha')
+    cita_id = request.GET.get('cita_id', None)  # Para excluir la cita actual al editar
     
     if not medico_id or not fecha:
         return JsonResponse({'error': 'Parámetros incompletos'}, status=400)
@@ -279,29 +289,32 @@ def obtener_horarios_disponibles(request):
         # Obtener horarios del médico para ese día
         horarios = HorarioMedico.objects.filter(MedicoID=medico, DiaSemana=dia_semana)
         
-        # Obtener citas ya agendadas para ese día
-        citas_agendadas = Cita.objects.filter(
-            MedicoID=medico,
-            FechaCita=fecha,
-        ).exclude(Estado='Cancelada').values_list('HoraCita', flat=True)
+        # Obtener citas ya agendadas para ese día (excluyendo la cita que se está editando)
+        citas_filter = Q(MedicoID=medico, FechaCita=fecha) & ~Q(Estado='Cancelada')
+        if cita_id:
+            citas_filter &= ~Q(CitaID=cita_id)
+            
+        citas_agendadas = Cita.objects.filter(citas_filter).values_list('HoraCita', flat=True)
         
-        # Generar horarios disponibles (intervalos de 30 min)
+        # Generar horarios disponibles (por horas completas, no intervalos de 30 min)
         horarios_disponibles = []
         
         for horario in horarios:
             hora_inicio = datetime.strptime(str(horario.HoraInicio), "%H:%M:%S").time()
             hora_fin = datetime.strptime(str(horario.HoraFin), "%H:%M:%S").time()
             
-            hora_actual = datetime.combine(datetime.today(), hora_inicio)
-            while hora_actual.time() < hora_fin:
-                hora_str = hora_actual.strftime("%H:%M")
+            # Usar horas completas en lugar de intervalos de 30 minutos
+            for hora in range(hora_inicio.hour, hora_fin.hour):
+                hora_str = f"{hora:02d}:00"
+                hora_obj = datetime.strptime(hora_str, "%H:%M").time()
+                
                 # Verificar si la hora ya está agendada
-                if hora_actual.time() not in citas_agendadas:
+                if hora_obj not in citas_agendadas:
+                    # Formato más amigable para mostrar (7 en lugar de 07:00)
                     horarios_disponibles.append({
                         'hora': hora_str,
-                        'label': hora_str
+                        'label': f"{hora}"
                     })
-                hora_actual += timedelta(minutes=30)
         
         return JsonResponse({'horarios': horarios_disponibles})
         
@@ -478,3 +491,268 @@ def edit_profile_view(request):
     }
     
     return render(request, 'edit_profile.html', context)
+
+@login_required
+def agregar_horario(request):
+    """
+    Vista para que el médico agregue un nuevo horario de disponibilidad
+    """
+    if request.session.get('user_type') != 'Medico':
+        messages.add_message(request, constants.ERROR, 'Solo los médicos pueden gestionar horarios')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        medico_id = request.session.get('user_id')
+        medico = Medico.objects.get(MedicoID=medico_id)
+        dia = request.POST.get('dia')
+        hora_inicio = request.POST.get('hora_inicio')
+        hora_fin = request.POST.get('hora_fin')
+        
+        # Validaciones
+        if not dia or not hora_inicio or not hora_fin:
+            messages.add_message(request, constants.ERROR, 'Todos los campos son obligatorios')
+            return redirect('dashboard')
+        
+        # Validar que la hora de fin sea posterior a la hora de inicio
+        if hora_inicio >= hora_fin:
+            messages.add_message(request, constants.ERROR, 'La hora de fin debe ser posterior a la hora de inicio')
+            return redirect('dashboard')
+        
+        # Verificar si ya existe un horario que se solape
+        horarios_solapados = HorarioMedico.objects.filter(
+            MedicoID=medico,
+            DiaSemana=dia
+        ).filter(
+            Q(HoraInicio__lt=hora_fin) & Q(HoraFin__gt=hora_inicio)
+        )
+        
+        if horarios_solapados.exists():
+            messages.add_message(request, constants.ERROR, 'Ya tienes un horario que se solapa con este período')
+            return redirect('dashboard')
+        
+        # Crear el horario
+        horario = HorarioMedico(
+            MedicoID=medico,
+            DiaSemana=dia,
+            HoraInicio=hora_inicio,
+            HoraFin=hora_fin
+        )
+        horario.save()
+        
+        messages.add_message(request, constants.SUCCESS, 'Horario agregado exitosamente')
+    
+    return redirect('dashboard')
+
+@login_required
+def editar_horario(request):
+    """
+    Vista para que el médico edite un horario existente
+    """
+    if request.session.get('user_type') != 'Medico':
+        messages.add_message(request, constants.ERROR, 'Solo los médicos pueden gestionar horarios')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        medico_id = request.session.get('user_id')
+        medico = Medico.objects.get(MedicoID=medico_id)
+        horario_id = request.POST.get('horario_id')
+        dia = request.POST.get('dia')
+        hora_inicio = request.POST.get('hora_inicio')
+        hora_fin = request.POST.get('hora_fin')
+        
+        # Validaciones
+        if not horario_id or not dia or not hora_inicio or not hora_fin:
+            messages.add_message(request, constants.ERROR, 'Todos los campos son obligatorios')
+            return redirect('dashboard')
+        
+        # Validar que la hora de fin sea posterior a la hora de inicio
+        if hora_inicio >= hora_fin:
+            messages.add_message(request, constants.ERROR, 'La hora de fin debe ser posterior a la hora de inicio')
+            return redirect('dashboard')
+        
+        try:
+            # Verificar que el horario pertenezca al médico
+            horario = HorarioMedico.objects.get(HorarioID=horario_id, MedicoID=medico)
+            
+            # Verificar si hay solapamiento con otros horarios del mismo día
+            horarios_solapados = HorarioMedico.objects.filter(
+                MedicoID=medico,
+                DiaSemana=dia
+            ).filter(
+                Q(HoraInicio__lt=hora_fin) & Q(HoraFin__gt=hora_inicio)
+            ).exclude(HorarioID=horario_id)
+            
+            if horarios_solapados.exists():
+                messages.add_message(request, constants.ERROR, 'Este horario se solapa con otro período ya configurado')
+                return redirect('dashboard')
+            
+            # Actualizar el horario
+            horario.DiaSemana = dia
+            horario.HoraInicio = hora_inicio
+            horario.HoraFin = hora_fin
+            horario.save()
+            
+            messages.add_message(request, constants.SUCCESS, 'Horario actualizado exitosamente')
+            
+        except HorarioMedico.DoesNotExist:
+            messages.add_message(request, constants.ERROR, 'El horario no existe o no te pertenece')
+    
+    return redirect('dashboard')
+
+@login_required
+def eliminar_horario(request, id):
+    """
+    Vista para que el médico elimine un horario existente
+    """
+    if request.session.get('user_type') != 'Medico':
+        messages.add_message(request, constants.ERROR, 'Solo los médicos pueden gestionar horarios')
+        return redirect('dashboard')
+    
+    try:
+        medico_id = request.session.get('user_id')
+        horario = HorarioMedico.objects.get(HorarioID=id, MedicoID_id=medico_id)
+        
+        # Verificar si hay citas asociadas a este horario
+        dia_semana_map = {'Lunes': 0, 'Martes': 1, 'Miércoles': 2, 'Jueves': 3, 'Viernes': 4, 'Sábado': 5, 'Domingo': 6}
+        
+        # Obtener todas las citas futuras del médico
+        citas_futuras = Cita.objects.filter(
+            MedicoID_id=medico_id,
+            FechaCita__gte=timezone.now().date(),
+            Estado__in=['Pendiente', 'Confirmada']
+        )
+        
+        # Verificar si alguna cita cae en el horario que se va a eliminar
+        horario_afectado = False
+        for cita in citas_futuras:
+            # Obtener el día de la semana de la cita (0: lunes, 6: domingo)
+            dia_cita = cita.FechaCita.weekday()
+            # Verificar si la cita está en el mismo día de la semana y dentro del rango de horas
+            if (dia_semana_map.get(horario.DiaSemana) == dia_cita and 
+                horario.HoraInicio <= cita.HoraCita <= horario.HoraFin):
+                horario_afectado = True
+                break
+        
+        if horario_afectado:
+            messages.add_message(request, constants.ERROR, 
+                'No se puede eliminar este horario porque hay citas programadas. Cancela las citas primero.')
+            return redirect('dashboard')
+        
+        # Eliminar el horario
+        horario.delete()
+        messages.add_message(request, constants.SUCCESS, 'Horario eliminado exitosamente')
+        
+    except HorarioMedico.DoesNotExist:
+        messages.add_message(request, constants.ERROR, 'El horario no existe o no te pertenece')
+    
+    return redirect('dashboard')
+
+@login_required
+def editar_cita(request):
+    """
+    Vista para editar una cita existente
+    """
+    if request.method != 'POST':
+        return redirect('dashboard')
+    
+    cita_id = request.POST.get('cita_id')
+    medico_id = request.POST.get('medico')
+    fecha = request.POST.get('fecha')
+    hora = request.POST.get('hora')
+    tipo = request.POST.get('tipo')
+    
+    try:
+        # Verificar que la cita pertenece al usuario
+        user_id = request.session.get('user_id')
+        
+        if request.session.get('user_type') == 'Paciente':
+            cita = Cita.objects.get(CitaID=cita_id, PacienteID_id=user_id)
+        else:
+            cita = Cita.objects.get(CitaID=cita_id, MedicoID_id=user_id)
+        
+        # Solo permitir editar citas pendientes
+        if cita.Estado != 'Pendiente':
+            messages.add_message(request, constants.ERROR, 'Solo se pueden editar citas en estado pendiente')
+            return redirect('dashboard')
+            
+        # Validar que la fecha y hora sean futuras
+        fecha_hora_cita = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
+        if fecha_hora_cita < datetime.now():
+            messages.add_message(request, constants.ERROR, 'La fecha y hora deben ser futuras')
+            return redirect('dashboard')
+        
+        # Validar disponibilidad del médico
+        medico = Medico.objects.get(MedicoID=medico_id)
+        
+        # Verificar si el médico tiene horario para ese día
+        dia_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][datetime.strptime(fecha, "%Y-%m-%d").weekday()]
+        
+        horario = HorarioMedico.objects.filter(
+            MedicoID=medico,
+            DiaSemana=dia_semana,
+            HoraInicio__lte=hora,
+            HoraFin__gte=hora
+        ).first()
+        
+        if not horario:
+            messages.add_message(request, constants.ERROR, 'El médico no tiene disponibilidad en el horario seleccionado')
+            return redirect('dashboard')
+        
+        # Verificar si ya existe otra cita en ese horario
+        cita_existente = Cita.objects.filter(
+            MedicoID=medico,
+            FechaCita=fecha,
+            HoraCita=hora
+        ).exclude(CitaID=cita_id).exclude(Estado='Cancelada').first()
+        
+        if cita_existente:
+            messages.add_message(request, constants.ERROR, 'Ya existe una cita en ese horario')
+            return redirect('dashboard')
+        
+        # Actualizar la cita
+        cita.MedicoID = medico
+        cita.FechaCita = fecha
+        cita.HoraCita = hora
+        cita.MedioCita = tipo
+        cita.save()
+        
+        messages.add_message(request, constants.SUCCESS, 'Cita actualizada exitosamente')
+        
+    except Cita.DoesNotExist:
+        messages.add_message(request, constants.ERROR, 'La cita no existe o no tienes permiso para editarla')
+    except Medico.DoesNotExist:
+        messages.add_message(request, constants.ERROR, 'El médico seleccionado no existe')
+    except Exception as e:
+        messages.add_message(request, constants.ERROR, f'Error al actualizar la cita: {str(e)}')
+    
+    return redirect('dashboard')
+
+@login_required
+def cancelar_cita(request, id):
+    """
+    Vista para cancelar una cita
+    """
+    try:
+        # Verificar que la cita pertenece al usuario
+        user_id = request.session.get('user_id')
+        
+        if request.session.get('user_type') == 'Paciente':
+            cita = Cita.objects.get(CitaID=id, PacienteID_id=user_id)
+        else:
+            cita = Cita.objects.get(CitaID=id, MedicoID_id=user_id)
+        
+        # Solo permitir cancelar citas pendientes
+        if cita.Estado != 'Pendiente':
+            messages.add_message(request, constants.ERROR, 'Solo se pueden cancelar citas en estado pendiente')
+            return redirect('dashboard')
+        
+        # Cancelar la cita
+        cita.Estado = 'Cancelada'
+        cita.save()
+        
+        messages.add_message(request, constants.SUCCESS, 'Cita cancelada exitosamente')
+        
+    except Cita.DoesNotExist:
+        messages.add_message(request, constants.ERROR, 'La cita no existe o no tienes permiso para cancelarla')
+    
+    return redirect('dashboard')

@@ -9,10 +9,11 @@
     padding: 1rem 1rem 2rem;
   }
   .navbar {
-    background-color: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background-color: var(--color-bg-primary);
+    box-shadow: 0 1px 3px var(--color-shadow);
     padding: 0.75rem 1.5rem;
     margin-bottom: 2rem;
+    transition: background-color 0.3s ease;
   }
   .dashboard-header {
     display: flex;
@@ -21,11 +22,12 @@
     margin-bottom: 2rem;
   }
   .dashboard-section {
-    background-color: white;
+    background-color: var(--color-card-bg);
     border-radius: 0.5rem;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px 0 var(--color-shadow);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
   .dashboard-grid {
     display: grid;
@@ -47,14 +49,15 @@
   table {
     width: 100%;
     border-collapse: collapse;
+    color: var(--color-text-primary);
   }
   table th, table td {
     padding: 0.75rem;
     text-align: left;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--color-border);
   }
   table th {
-    background-color: #f8fafc;
+    background-color: var(--color-dashboard-element);
     font-weight: 600;
   }
   .btn {
@@ -69,18 +72,19 @@
     transition: all 0.2s;
   }
   .btn-primary {
-    background-color: #4f46e5;
+    background-color: var(--color-accent);
     color: white;
   }
   .btn-primary:hover {
-    background-color: #4338ca;
+    background-color: var(--color-accent-hover);
   }
   .btn-secondary {
-    background-color: #f3f4f6;
-    color: #1f2937;
+    background-color: var(--color-dashboard-element);
+    color: var(--color-dashboard-text);
+    border: 1px solid var(--color-dashboard-border);
   }
   .btn-secondary:hover {
-    background-color: #e5e7eb;
+    background-color: var(--color-btn-secondary-hover-bg);
   }
   .action-buttons {
     display: flex;
@@ -94,20 +98,20 @@
     font-weight: 500;
   }
   .badge-success {
-    background-color: #dcfce7;
-    color: #166534;
+    background-color: rgba(22, 101, 52, 0.2);
+    color: #10b981;
   }
   .badge-warning {
-    background-color: #fef9c3;
-    color: #854d0e;
+    background-color: rgba(133, 77, 14, 0.2);
+    color: #f59e0b;
   }
   .badge-error {
-    background-color: #fee2e2;
-    color: #b91c1c;
+    background-color: rgba(185, 28, 28, 0.2);
+    color: #ef4444;
   }
   .badge-info {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: rgba(30, 64, 175, 0.2);
+    color: #3b82f6;
   }
   .hide {
     display: none;
@@ -119,12 +123,15 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
+    color: var(--color-text-primary);
   }
   .form-control {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--color-input-border);
     border-radius: 0.375rem;
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
   }
   /* Dropdown menu */
   .dropdown {
@@ -135,9 +142,9 @@
     display: none;
     position: absolute;
     right: 0;
-    background-color: white;
+    background-color: var(--color-bg-primary);
     min-width: 180px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 10px var(--color-shadow);
     border-radius: 0.375rem;
     z-index: 1;
   }
@@ -149,14 +156,16 @@
     display: flex;
     align-items: center;
     text-decoration: none;
-    color: #1f2937;
+    color: var(--color-text-primary);
     transition: background-color 0.2s;
   }
   .dropdown-item:hover {
-    background-color: #f3f4f6;
+    background-color: var(--color-dashboard-element);
   }
   .dropdown-item svg {
     margin-right: 0.5rem;
+    fill: none;
+    stroke: currentColor;
   }
   
   /* User avatar */
@@ -164,13 +173,35 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #4f46e5;
+    background-color: var(--color-accent);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
     font-size: 1.25rem;
+  }
+  
+  /* Text colors */
+  .text-app-primary {
+    color: var(--color-text-primary);
+  }
+  
+  .text-app-secondary {
+    color: var(--color-text-secondary);
+  }
+  
+  /* SVG icons */
+  svg.ui-icon {
+    stroke: currentColor;
+  }
+
+  .summary-card {
+    background-color: var(--color-summary-bg);
+    transition: background-color 0.3s ease;
+  }
+  .summary-label {
+    color: var(--color-text-secondary);
   }
 </style>
 {% endblock 'head' %}
@@ -181,7 +212,7 @@
   <div class="flex items-center justify-between w-full">
     <div class="flex items-center">
       <img class="h-8 w-auto mr-4" src="https://1drv.ms/i/c/f377aeed6cdb221a/EXE2FnkHw2pIsMK_bpS9ZEABP782bDHBX4iXTD6-vxhAtA?e=qVPUSf.png" alt="Medical App">
-      <h1 class="text-xl font-bold">
+      <h1 class="text-xl font-bold text-app-primary">
         {% if request.session.user_type == 'Medico' %}
           Portal Médico
         {% else %}
@@ -196,28 +227,28 @@
             {{ request.session.user_name|slice:":1" }}
           </div>
           <div>
-            <span class="text-sm font-medium">{{ request.session.user_name }}</span>
+            <span class="text-sm font-medium text-app-primary">{{ request.session.user_name }}</span>
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ui-icon text-app-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
         <div class="dropdown-content">
           <a href="{% url 'edit_profile' %}" class="dropdown-item">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ui-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             Editar perfil
           </a>
           <a href="{% url 'dashboard' %}" class="dropdown-item">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ui-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             Dashboard
           </a>
           <a href="{% url 'logout' %}" class="dropdown-item text-red-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ui-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             Cerrar sesión
@@ -230,29 +261,30 @@
 
 <div class="dashboard-container">
   <div class="dashboard-header">
-    <h1 class="text-3xl font-bold">
-      Dashboard - 
+    <h2 class="text-2xl font-bold text-app-primary">
+      Dashboard -
       {% if request.session.user_type == 'Medico' %}
         Médico
       {% else %}
         Paciente
       {% endif %}
-    </h1>
-    <div>
-      <span class="font-semibold">Bienvenido, {{ request.session.user_name }}</span>
-    </div>
+    </h2>
+    
+    {% if request.session.user_type == 'Medico' %}
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">+ Agregar Horario</a>
+    {% else %}
+    <a href="{% url 'agendar_cita' %}" class="btn btn-primary">+ Solicitar Cita</a>
+    {% endif %}
   </div>
 
   {% if messages %}
+  <div class="mb-6">
     {% for message in messages %}
-      <div class="rounded-md {{message.tags}} mb-4">
-        <div class="flex">
-          <div class="ml-3 py-4">
-            {{message}}
-          </div>
-        </div>
-      </div>
+    <div class="p-4 mb-4 rounded-md {{ message.tags }}">
+      {{ message }}
+    </div>
     {% endfor %}
+  </div>
   {% endif %}
 
   <!-- Secciones específicas para médicos -->
@@ -275,11 +307,15 @@
               {% for horario in horarios %}
               <tr>
                 <td>{{ horario.DiaSemana }}</td>
-                <td>{{ horario.HoraInicio }}</td>
-                <td>{{ horario.HoraFin }}</td>
+                <td>{{ horario.HoraInicio|time:"g" }} hs</td>
+                <td>{{ horario.HoraFin|time:"g" }} hs</td>
                 <td class="action-buttons">
-                  <button class="btn btn-secondary">Editar</button>
-                  <button class="btn btn-secondary">Eliminar</button>
+                  <button class="btn btn-secondary edit-horario" 
+                          data-id="{{ horario.HorarioID }}" 
+                          data-dia="{{ horario.DiaSemana }}" 
+                          data-inicio="{{ horario.HoraInicio }}" 
+                          data-fin="{{ horario.HoraFin }}">Editar</button>
+                  <a href="{% url 'eliminar_horario' horario.HorarioID %}" class="btn btn-secondary">Eliminar</a>
                 </td>
               </tr>
               {% empty %}
@@ -290,7 +326,43 @@
             </tbody>
           </table>
           <div class="mt-4">
-            <a class="btn btn-primary" type="button" href="{% url  'agregar_horario_view'%}">Agregar Horario</a>
+            <a id="mostrarFormularioHorario" class="btn btn-primary" type="button" href="{% url  'agregar_horario_view'%}">Agregar Horario</a>
+          </div>
+          
+          <!-- Formulario para agregar/editar horarios -->
+          <div id="formularioHorario" class="mt-6 p-4 dashboard-section hide">
+            <h3 class="text-lg font-semibold mb-3" id="formularioTitulo">Agregar Nuevo Horario</h3>
+            <form method="post" action="{% url 'agregar_horario' %}" id="horarioForm">
+              {% csrf_token %}
+              <input type="hidden" name="horario_id" id="horarioId" value="">
+              <div class="grid grid-cols-3 gap-4">
+                <div class="form-group">
+                  <label for="dia">Día de la Semana</label>
+                  <select name="dia" id="dia" class="form-control" required>
+                    <option value="">Seleccione un día</option>
+                    <option value="Lunes">Lunes</option>
+                    <option value="Martes">Martes</option>
+                    <option value="Miércoles">Miércoles</option>
+                    <option value="Jueves">Jueves</option>
+                    <option value="Viernes">Viernes</option>
+                    <option value="Sábado">Sábado</option>
+                    <option value="Domingo">Domingo</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="hora_inicio">Hora de Inicio</label>
+                  <input type="time" name="hora_inicio" id="horaInicio" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="hora_fin">Hora de Fin</label>
+                  <input type="time" name="hora_fin" id="horaFin" class="form-control" required>
+                </div>
+              </div>
+              <div class="mt-4 flex gap-2">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="button" id="cancelarHorario" class="btn btn-secondary">Cancelar</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -300,20 +372,20 @@
         <div class="dashboard-section">
           <h2 class="text-xl font-semibold mb-4">Resumen</h2>
           <div class="grid grid-cols-2 gap-4">
-            <div class="bg-gray-50 p-4 rounded">
-              <span class="text-sm text-gray-500">Citas Pendientes</span>
+            <div class="summary-card p-4 rounded">
+              <span class="text-sm summary-label">Citas Pendientes</span>
               <p class="text-2xl font-bold">{{ citas_pendientes|default:"0" }}</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded">
-              <span class="text-sm text-gray-500">Citas Hoy</span>
+            <div class="summary-card p-4 rounded">
+              <span class="text-sm summary-label">Citas Hoy</span>
               <p class="text-2xl font-bold">{{ citas_hoy|default:"0" }}</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded">
-              <span class="text-sm text-gray-500">Total Pacientes</span>
+            <div class="summary-card p-4 rounded">
+              <span class="text-sm summary-label">Total Pacientes</span>
               <p class="text-2xl font-bold">{{ total_pacientes|default:"0" }}</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded">
-              <span class="text-sm text-gray-500">Consultas Este Mes</span>
+            <div class="summary-card p-4 rounded">
+              <span class="text-sm summary-label">Consultas Este Mes</span>
               <p class="text-2xl font-bold">{{ consultas_mes|default:"0" }}</p>
             </div>
           </div>
@@ -357,8 +429,14 @@
                   {% endif %}
                 </td>
                 <td class="action-buttons">
-                  <button class="btn btn-secondary">Ver Detalles</button>
-                  <button class="btn btn-primary">Atender</button>
+                  <button class="btn btn-secondary ver-cita" data-id="{{ cita.CitaID }}" data-medico="{{ cita.MedicoID.Nombre }}" 
+                    data-especialidad="{{ cita.MedicoID.Especialidad }}" data-fecha="{{ cita.FechaCita }}" 
+                    data-hora="{{ cita.HoraCita }}" data-tipo="{{ cita.MedioCita }}" data-estado="{{ cita.Estado }}">Ver Detalles</button>
+                  {% if cita.Estado == 'Pendiente' %}
+                    <button class="btn btn-secondary editar-cita" data-id="{{ cita.CitaID }}" data-medico="{{ cita.MedicoID.MedicoID }}" 
+                      data-fecha="{{ cita.FechaCita|date:'Y-m-d' }}" data-hora="{{ cita.HoraCita }}" data-tipo="{{ cita.MedioCita }}">Editar</button>
+                    <a href="{% url 'cancelar_cita' cita.CitaID %}" class="btn btn-primary" onclick="return confirm('¿Está seguro que desea cancelar esta cita?')">Cancelar</a>
+                  {% endif %}
                 </td>
               </tr>
               {% empty %}
@@ -426,16 +504,16 @@
         <div class="dashboard-section">
           <h2 class="text-xl font-semibold mb-4">Resumen</h2>
           <div class="grid grid-cols-2 gap-4">
-            <div class="bg-gray-50 p-4 rounded">
-              <span class="text-sm text-gray-500">Citas Pendientes</span>
+            <div class="summary-card p-4 rounded">
+              <span class="text-sm summary-label">Citas Pendientes</span>
               <p class="text-2xl font-bold">{{ citas_pendientes|default:"0" }}</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded">
-              <span class="text-sm text-gray-500">Próxima Cita</span>
+            <div class="summary-card p-4 rounded">
+              <span class="text-sm summary-label">Próxima Cita</span>
               <p class="text-sm font-bold">{{ proxima_cita.FechaCita|default:"Sin citas" }}</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded col-span-2">
-              <span class="text-sm text-gray-500">Historia Clínica</span>
+            <div class="summary-card p-4 rounded col-span-2">
+              <span class="text-sm summary-label">Historia Clínica</span>
               <p class="text-2xl font-bold">{{ total_consultas|default:"0" }} consultas</p>
             </div>
           </div>
@@ -481,9 +559,13 @@
                   {% endif %}
                 </td>
                 <td class="action-buttons">
-                  <button class="btn btn-secondary">Ver Detalles</button>
+                  <button class="btn btn-secondary ver-cita" data-id="{{ cita.CitaID }}" data-medico="{{ cita.MedicoID.Nombre }}" 
+                    data-especialidad="{{ cita.MedicoID.Especialidad }}" data-fecha="{{ cita.FechaCita }}" 
+                    data-hora="{{ cita.HoraCita }}" data-tipo="{{ cita.MedioCita }}" data-estado="{{ cita.Estado }}">Ver Detalles</button>
                   {% if cita.Estado == 'Pendiente' %}
-                    <button class="btn btn-primary">Cancelar</button>
+                    <button class="btn btn-secondary editar-cita" data-id="{{ cita.CitaID }}" data-medico="{{ cita.MedicoID.MedicoID }}" 
+                      data-fecha="{{ cita.FechaCita|date:'Y-m-d' }}" data-hora="{{ cita.HoraCita }}" data-tipo="{{ cita.MedioCita }}">Editar</button>
+                    <a href="{% url 'cancelar_cita' cita.CitaID %}" class="btn btn-primary" onclick="return confirm('¿Está seguro que desea cancelar esta cita?')">Cancelar</a>
                   {% endif %}
                 </td>
               </tr>
@@ -534,4 +616,310 @@
     </div>
   {% endif %}
 </div>
-{% endblock 'body' %} 
+
+<!-- Modal para ver detalles de cita -->
+<div id="modalVerCita" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+    <h3 class="text-xl font-semibold mb-4">Detalles de la Cita</h3>
+    <div class="mb-4">
+      <p><strong>Médico:</strong> <span id="citaMedico"></span></p>
+      <p><strong>Especialidad:</strong> <span id="citaEspecialidad"></span></p>
+      <p><strong>Fecha:</strong> <span id="citaFecha"></span></p>
+      <p><strong>Hora:</strong> <span id="citaHora"></span></p>
+      <p><strong>Tipo:</strong> <span id="citaTipo"></span></p>
+      <p><strong>Estado:</strong> <span id="citaEstado"></span></p>
+    </div>
+    <div class="flex justify-end">
+      <button id="cerrarModalVerCita" class="btn btn-secondary">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar cita -->
+<div id="modalEditarCita" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+    <h3 class="text-xl font-semibold mb-4">Editar Cita</h3>
+    <form id="formEditarCita" method="post" action="{% url 'editar_cita' %}">
+      {% csrf_token %}
+      <input type="hidden" id="editCitaId" name="cita_id">
+      <div class="mb-4">
+        <label for="editMedico" class="block mb-2">Médico</label>
+        <select id="editMedico" name="medico" class="form-control" required>
+          <option value="">Seleccione un médico</option>
+          {% for medico in medicos %}
+            <option value="{{ medico.MedicoID }}">{{ medico.Nombre }} - {{ medico.Especialidad }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="editFecha" class="block mb-2">Fecha</label>
+        <input type="date" id="editFecha" name="fecha" class="form-control" required>
+      </div>
+      <div class="mb-4">
+        <label for="editHora" class="block mb-2">Hora</label>
+        <select id="editHora" name="hora" class="form-control" required>
+          <option value="">Seleccione una hora</option>
+          <!-- Las horas disponibles se cargarán dinámicamente -->
+        </select>
+      </div>
+      <div class="mb-4">
+        <label for="editTipo" class="block mb-2">Tipo de Consulta</label>
+        <select id="editTipo" name="tipo" class="form-control" required>
+          <option value="Presencial">Presencial</option>
+          <option value="Virtual">Virtual</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" id="cerrarModalEditarCita" class="btn btn-secondary">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock 'body' %}
+
+{% block 'scripts' %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Variables para el formulario de horarios
+    const mostrarFormularioBtn = document.getElementById('mostrarFormularioHorario');
+    const formularioHorario = document.getElementById('formularioHorario');
+    const cancelarHorarioBtn = document.getElementById('cancelarHorario');
+    const formularioTitulo = document.getElementById('formularioTitulo');
+    const horarioForm = document.getElementById('horarioForm');
+    const horarioIdInput = document.getElementById('horarioId');
+    const diaSelect = document.getElementById('dia');
+    const horaInicioInput = document.getElementById('horaInicio');
+    const horaFinInput = document.getElementById('horaFin');
+    
+    // Mostrar formulario para agregar nuevo horario
+    if (mostrarFormularioBtn) {
+      mostrarFormularioBtn.addEventListener('click', function() {
+        // Reiniciar el formulario
+        horarioForm.reset();
+        horarioIdInput.value = '';
+        formularioTitulo.textContent = 'Agregar Nuevo Horario';
+        formularioHorario.classList.remove('hide');
+        horarioForm.action = "{% url 'agregar_horario' %}";
+      });
+    }
+    
+    // Cancelar y ocultar formulario
+    if (cancelarHorarioBtn) {
+      cancelarHorarioBtn.addEventListener('click', function() {
+        formularioHorario.classList.add('hide');
+      });
+    }
+    
+    // Editar horario (cargar datos en el formulario)
+    const editButtons = document.querySelectorAll('.edit-horario');
+    editButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const dia = this.getAttribute('data-dia');
+        const inicio = this.getAttribute('data-inicio');
+        const fin = this.getAttribute('data-fin');
+        
+        // Configurar el formulario para edición
+        horarioIdInput.value = id;
+        diaSelect.value = dia;
+        horaInicioInput.value = inicio;
+        horaFinInput.value = fin;
+        
+        formularioTitulo.textContent = 'Editar Horario';
+        formularioHorario.classList.remove('hide');
+        horarioForm.action = "{% url 'editar_horario' %}";
+      });
+    });
+
+    // Código para manejar selección de hora en agendamiento de citas
+    const medicoSelect = document.getElementById('medico');
+    const fechaInput = document.getElementById('fecha');
+    const horaSelect = document.getElementById('hora');
+
+    // Función para cargar horas disponibles
+    function cargarHorasDisponibles() {
+      const medicoId = medicoSelect.value;
+      const fecha = fechaInput.value;
+      
+      if (!medicoId || !fecha) {
+        return;
+      }
+      
+      // Limpiar opciones actuales
+      horaSelect.innerHTML = '<option value="">Seleccione una hora</option>';
+      
+      // Obtener horas disponibles
+      fetch(`/api/horarios-disponibles/?medico_id=${medicoId}&fecha=${fecha}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.horarios && data.horarios.length > 0) {
+            data.horarios.forEach(horario => {
+              const option = document.createElement('option');
+              option.value = horario.hora;
+              // Formatear la hora para mostrar como "7 hs" en lugar de "07:00"
+              const hora = new Date(`2000-01-01T${horario.hora}`);
+              const horaAmigable = hora.getHours() + ' hs';
+              option.textContent = horaAmigable;
+              horaSelect.appendChild(option);
+            });
+          } else {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "No hay horarios disponibles";
+            option.disabled = true;
+            horaSelect.appendChild(option);
+          }
+        })
+        .catch(error => {
+          console.error('Error al cargar horarios:', error);
+        });
+    }
+    
+    // Registrar eventos para cargar horas disponibles
+    if (medicoSelect && fechaInput) {
+      medicoSelect.addEventListener('change', cargarHorasDisponibles);
+      fechaInput.addEventListener('change', cargarHorasDisponibles);
+    }
+
+    // ----- Manejo de Modales para Citas -----
+    // Variables para el modal de ver detalles
+    const modalVerCita = document.getElementById('modalVerCita');
+    const cerrarModalVerCita = document.getElementById('cerrarModalVerCita');
+    const citaMedicoSpan = document.getElementById('citaMedico');
+    const citaEspecialidadSpan = document.getElementById('citaEspecialidad');
+    const citaFechaSpan = document.getElementById('citaFecha');
+    const citaHoraSpan = document.getElementById('citaHora');
+    const citaTipoSpan = document.getElementById('citaTipo');
+    const citaEstadoSpan = document.getElementById('citaEstado');
+
+    // Variables para el modal de editar cita
+    const modalEditarCita = document.getElementById('modalEditarCita');
+    const cerrarModalEditarCita = document.getElementById('cerrarModalEditarCita');
+    const editCitaId = document.getElementById('editCitaId');
+    const editMedico = document.getElementById('editMedico');
+    const editFecha = document.getElementById('editFecha');
+    const editHora = document.getElementById('editHora');
+    const editTipo = document.getElementById('editTipo');
+
+    // Función para cargar horas disponibles en edición
+    function cargarHorasDisponiblesEdicion() {
+      const medicoId = editMedico.value;
+      const fecha = editFecha.value;
+      const citaId = editCitaId.value;
+      
+      if (!medicoId || !fecha) {
+        return;
+      }
+      
+      // Limpiar opciones actuales
+      editHora.innerHTML = '<option value="">Seleccione una hora</option>';
+      
+      // Obtener horas disponibles
+      fetch(`/api/horarios-disponibles/?medico_id=${medicoId}&fecha=${fecha}&cita_id=${citaId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.horarios && data.horarios.length > 0) {
+            data.horarios.forEach(horario => {
+              const option = document.createElement('option');
+              option.value = horario.hora;
+              // Formatear la hora para mostrar como "7 hs" en lugar de "07:00"
+              const hora = new Date(`2000-01-01T${horario.hora}`);
+              const horaAmigable = hora.getHours() + ' hs';
+              option.textContent = horaAmigable;
+              editHora.appendChild(option);
+            });
+          } else {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "No hay horarios disponibles";
+            option.disabled = true;
+            editHora.appendChild(option);
+          }
+        })
+        .catch(error => {
+          console.error('Error al cargar horarios:', error);
+        });
+    }
+
+    // Abrir modal ver detalles de cita
+    const botonesVerCita = document.querySelectorAll('.ver-cita');
+    botonesVerCita.forEach(boton => {
+      boton.addEventListener('click', function() {
+        const medico = this.getAttribute('data-medico');
+        const especialidad = this.getAttribute('data-especialidad');
+        const fecha = this.getAttribute('data-fecha');
+        const hora = this.getAttribute('data-hora');
+        const tipo = this.getAttribute('data-tipo');
+        const estado = this.getAttribute('data-estado');
+        
+        // Rellenar información
+        citaMedicoSpan.textContent = medico;
+        citaEspecialidadSpan.textContent = especialidad;
+        citaFechaSpan.textContent = fecha;
+        citaHoraSpan.textContent = hora;
+        citaTipoSpan.textContent = tipo;
+        citaEstadoSpan.textContent = estado;
+        
+        // Mostrar modal
+        modalVerCita.classList.remove('hidden');
+      });
+    });
+    
+    // Cerrar modal ver detalles
+    if (cerrarModalVerCita) {
+      cerrarModalVerCita.addEventListener('click', function() {
+        modalVerCita.classList.add('hidden');
+      });
+    }
+    
+    // Abrir modal editar cita
+    const botonesEditarCita = document.querySelectorAll('.editar-cita');
+    botonesEditarCita.forEach(boton => {
+      boton.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        const medico = this.getAttribute('data-medico');
+        const fecha = this.getAttribute('data-fecha');
+        const hora = this.getAttribute('data-hora');
+        const tipo = this.getAttribute('data-tipo');
+        
+        // Configurar el formulario para edición
+        editCitaId.value = id;
+        editMedico.value = medico;
+        editFecha.value = fecha;
+        editTipo.value = tipo;
+        
+        // Cargar horas disponibles
+        cargarHorasDisponiblesEdicion();
+        
+        // Cuando hayan cargado las horas, seleccionar la actual
+        setTimeout(() => {
+          for (let i = 0; i < editHora.options.length; i++) {
+            if (editHora.options[i].value === hora) {
+              editHora.selectedIndex = i;
+              break;
+            }
+          }
+        }, 500);
+        
+        // Mostrar modal
+        modalEditarCita.classList.remove('hidden');
+      });
+    });
+    
+    // Cerrar modal editar
+    if (cerrarModalEditarCita) {
+      cerrarModalEditarCita.addEventListener('click', function() {
+        modalEditarCita.classList.add('hidden');
+      });
+    }
+    
+    // Eventos para cargar horas disponibles en edición
+    if (editMedico && editFecha) {
+      editMedico.addEventListener('change', cargarHorasDisponiblesEdicion);
+      editFecha.addEventListener('change', cargarHorasDisponiblesEdicion);
+    }
+  });
+</script>
+{% endblock 'scripts' %} 

@@ -30,6 +30,11 @@
             --color-btn-secondary-bg: #ffffff;
             --color-btn-secondary-border: #4f46e5;
             --color-btn-secondary-hover-bg: #f5f3ff;
+            --color-card-bg: #ffffff;
+            --color-dashboard-element: #f3f4f6;
+            --color-dashboard-text: #111827;
+            --color-dashboard-border: #e5e7eb;
+            --color-summary-bg: #f3f4f6;
         }
 
         /* Dark theme colors */
@@ -48,6 +53,11 @@
             --color-btn-secondary-bg: #1f2937;
             --color-btn-secondary-border: #6366f1;
             --color-btn-secondary-hover-bg: #2e3c54;
+            --color-card-bg: #1f2937;
+            --color-dashboard-element: #374151;
+            --color-dashboard-text: #f9fafb;
+            --color-dashboard-border: #4b5563;
+            --color-summary-bg: #2d3748;
         }
         
         /* Apply colors based on system preference by default */
@@ -67,6 +77,11 @@
                 --color-btn-secondary-bg: #1f2937;
                 --color-btn-secondary-border: #6366f1;
                 --color-btn-secondary-hover-bg: #2e3c54;
+                --color-card-bg: #1f2937;
+                --color-dashboard-element: #374151;
+                --color-dashboard-text: #f9fafb;
+                --color-dashboard-border: #4b5563;
+                --color-summary-bg: #2d3748;
             }
         }
         
@@ -115,7 +130,7 @@
         
         /* Modern card styling */
         .card {
-            background-color: var(--color-bg-primary);
+            background-color: var(--color-card-bg);
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px var(--color-shadow), 0 2px 4px -2px var(--color-shadow);
             transition: box-shadow 0.3s ease, transform 0.3s ease;
@@ -151,29 +166,30 @@
         /* Theme toggle styling */
         .theme-toggle {
             position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background-color: var(--color-bg-primary);
-            border: 2px solid var(--color-border);
+            top: 1.5rem;
+            right: 1.5rem;
+            background-color: var(--color-accent);
+            border: 2px solid var(--color-accent);
             border-radius: 9999px;
-            padding: 0.5rem;
+            padding: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 50;
-            box-shadow: 0 2px 5px var(--color-shadow);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 4px 8px var(--color-shadow);
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         
         .theme-toggle:hover {
-            border-color: var(--color-accent);
+            transform: scale(1.1);
+            background-color: var(--color-accent-hover);
         }
         
         .theme-toggle svg {
-            height: 1.25rem;
-            width: 1.25rem;
-            fill: var(--color-text-primary);
+            height: 1.5rem;
+            width: 1.5rem;
+            fill: white;
         }
         
         /* Message styling */
@@ -199,6 +215,38 @@
             text-decoration: underline;
             text-underline-offset: 0.2em;
         }
+        
+        /* Dashboard specific styles */
+        .dashboard-card {
+            background-color: var(--color-dashboard-element);
+            color: var(--color-dashboard-text);
+            border: 1px solid var(--color-dashboard-border);
+        }
+        
+        .dashboard-text {
+            color: var(--color-dashboard-text);
+        }
+        
+        .dashboard-border {
+            border-color: var(--color-dashboard-border);
+        }
+        
+        /* Tables in dark mode */
+        table {
+            color: var(--color-text-primary);
+            border-color: var(--color-border);
+        }
+        
+        th, td {
+            border-color: var(--color-border);
+        }
+        
+        /* Make sure form elements stand out */
+        select, textarea {
+            background-color: var(--color-input-bg);
+            border: 2px solid var(--color-input-border);
+            color: var(--color-text-primary);
+        }
     </style>
     <script>
         // Function to set theme
@@ -207,13 +255,11 @@
             localStorage.setItem('theme', theme);
         }
         
-        // Function to toggle theme
+        // Function to toggle theme - simplified to just switch between dark and light
         function toggleTheme() {
-            const currentTheme = localStorage.getItem('theme') || 'system';
-            if (currentTheme === 'dark') {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            if (currentTheme === 'dark' || currentTheme === 'system') {
                 setTheme('light');
-            } else if (currentTheme === 'light') {
-                setTheme('system');
             } else {
                 setTheme('dark');
             }
@@ -222,15 +268,13 @@
         
         // Function to update the theme toggle icon
         function updateThemeToggleIcon() {
-            const currentTheme = localStorage.getItem('theme') || 'system';
+            const currentTheme = localStorage.getItem('theme') || 'light';
             const toggleIcon = document.getElementById('theme-toggle-icon');
             
-            if (currentTheme === 'dark') {
+            if (currentTheme === 'dark' || (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 toggleIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/></svg>`;
-            } else if (currentTheme === 'light') {
-                toggleIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/></svg>`;
             } else {
-                toggleIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM12 13.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM3 12a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5H2.25A.75.75 0 013 12zM5.47 17.47a.75.75 0 001.06 0l1.59-1.591a.75.75 0 00-1.061-1.06l-1.59 1.59a.75.75 0 000 1.06zM18.53 17.47a.75.75 0 000-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591a.75.75 0 001.06 0zM5.47 6.53a.75.75 0 010-1.06l1.59-1.591a.75.75 0 011.061 1.06L6.53 6.53a.75.75 0 01-1.06 0zM18.53 6.53a.75.75 0 01-1.06 0l-1.59-1.591a.75.75 0 111.061-1.06l1.59 1.591a.75.75 0 010 1.06z"/></svg>`;
+                toggleIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/></svg>`;
             }
         }
         
@@ -242,16 +286,15 @@
             if (storedTheme) {
                 document.documentElement.setAttribute('data-theme', storedTheme);
             } else {
-                // Check system preference
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    setTheme('dark');
-                } else {
-                    setTheme('light');
-                }
+                // Default to light theme
+                setTheme('light');
             }
             
             // Update the toggle icon
             updateThemeToggleIcon();
+            
+            // Add media query listener to update icon when system preference changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateThemeToggleIcon);
         });
     </script>
     {% block 'head' %}{% endblock 'head' %}
@@ -266,6 +309,10 @@
             </svg>
         </span>
     </button>
-    {% block 'body' %}{% endblock 'body' %}
+    {% block 'body' %}
+    {% endblock 'body' %}
+    
+    {% block 'scripts' %}
+    {% endblock 'scripts' %}
 </body>
 </html>
