@@ -1,13 +1,13 @@
 from django.http import Http404
 from django.shortcuts import render, redirect
-from .models import Patients, Todos, Consult
+from .models import Paciente, Cita
 from django.contrib import messages
 from django.contrib.messages import constants
 
 def patients(request):
     if request.method == 'GET':
-        patients = Patients.objects.all()
-        return render(request, 'patients.html', {'conditions': Patients.conditions_choices, 'patients': patients})
+        patients = Paciente.objects.all()
+        return render(request, 'patients.html', {'patients': patients})
     elif request.method == 'POST':
         name = request.POST['name']
         email = request.POST['email']
@@ -16,10 +16,10 @@ def patients(request):
         picture = request.FILES['picture']
 
         if len(name.strip()) == 0 or not picture:
-            messages.add_message(request, constants.ERROR, 'Preencha todos os campos!')
+            messages.add_message(request, constants.ERROR, 'Llene todos los campos!')
             return redirect('patients')
         
-        patients = Patients(
+        patients = Paciente(
             name=name,
             email=email,
             phone=phone,
@@ -32,10 +32,9 @@ def patients(request):
         return redirect('patients')
 
 def patient_view(request, id):
-    patient = Patients.objects.get(id=id)
+    patient = Paciente.objects.get(id=id)
     if request.method == 'GET':
-        todos = Todos.objects.all()
-        consults = Consult.objects.filter(patient=patient)
+        consults = Cita.objects.filter(patient=patient)
 
         # Working in charts
         #consults_list = list(str(c.date) for c in consults)
@@ -51,14 +50,14 @@ def patient_view(request, id):
             [str(i.humor) for i in consults])
         print(tuple_charts)
 
-        return render(request, 'patient.html', {'patient': patient, 'todos': todos, 'consults': consults, 'tuple_charts': tuple_charts})
+        return render(request, 'patient.html', {'patient': patient, 'consults': consults, 'tuple_charts': tuple_charts})
     else:
         humor = request.POST.get('humor')
         geral_register = request.POST.get('geral_register')
         video = request.FILES.get('video')
         todos = request.POST.getlist('todos')
 
-        consults = Consult(
+        consults = Cita(
             humor=int(humor),
             geral_register=geral_register,
             video=video,
@@ -66,31 +65,27 @@ def patient_view(request, id):
         )
         consults.save()
 
-        for t in todos:
-            todo = Todos.objects.get(id=t)
-            consults.todo.add(todo)
-
         consults.save()
          
-        messages.add_message(request, constants.SUCCESS, 'Registro de consulta adicionado com sucesso.')
+        messages.add_message(request, constants.SUCCESS, 'Registro de consulta agregado con exito.')
         return redirect(f'/patients/{id}')
 
 def upgrade_patient(request, id):
     payments_status = request.POST.get('payments_status')
-    patient = Patients.objects.get(id=id)
-    status = True if payments_status == 'ativo' else False
+    patient = Paciente.objects.get(id=id)
+    status = True if payments_status == 'Activo' else False
     patient.payments_status = status
     patient.save()
 
     return redirect(f'/patients/{id}')
 
 def delete_consult(request, id):
-    consult = Consult.objects.get(id=id)
+    consult = Cita.objects.get(id=id)
     consult.delete()
-    return redirect(f'/patients/{consult.patient.id}')
+    return redirect(f'/patients/{consult.PacienteID}')
 
 def public_consult(request, id):
-    consults = Consult.objects.get(id=id)
+    consults = Cita.objects.get(id=id)
     print(consults.link_publico)
     if not consults.patient.payments_status:
         raise Http404()
