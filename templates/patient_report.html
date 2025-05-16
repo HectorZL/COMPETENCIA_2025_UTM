@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block 'head' %}
+<title>Mi Historial Médico</title>
+<style>
+  .report-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 2rem;
+  }
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .report-section {
+    background-color: var(--color-card-bg);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px var(--color-shadow);
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    transition: background-color 0.3s ease;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .stats-card {
+    background-color: var(--color-summary-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  .stats-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  .stats-label {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+  .chart-container {
+    height: 300px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .appointments-list {
+    margin-bottom: 1.5rem;
+  }
+  .appointment-card {
+    background-color: var(--color-summary-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: transform 0.2s ease;
+  }
+  .appointment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--color-shadow);
+  }
+  .appointment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  .appointment-date {
+    font-weight: bold;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+  .fixed-bottom-left {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 100;
+  }
+  .doctor-card {
+    background-color: var(--color-summary-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .doctor-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.25rem;
+  }
+  .doctor-info {
+    flex: 1;
+  }
+  .doctor-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  .doctor-specialty {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .badge-success {
+    background-color: rgba(22, 101, 52, 0.2);
+    color: #10b981;
+  }
+  .badge-warning {
+    background-color: rgba(133, 77, 14, 0.2);
+    color: #f59e0b;
+  }
+  .badge-error {
+    background-color: rgba(185, 28, 28, 0.2);
+    color: #ef4444;
+  }
+  .badge-info {
+    background-color: rgba(30, 64, 175, 0.2);
+    color: #3b82f6;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock 'head' %}
+
+{% block 'body' %}
+<!-- Dark mode toggle button -->
+<div class="fixed-bottom-left">
+  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  </button>
+</div>
+
+<div class="report-container">
+  <div class="report-header">
+    <h1 class="text-2xl font-bold">Mi Historial Médico</h1>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Volver al Dashboard</a>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Información del Paciente</h2>
+    <p><strong>Nombre:</strong> {{ paciente.Nombre }}</p>
+    <p><strong>Email:</strong> {{ paciente.Email }}</p>
+    <p><strong>Fecha de Nacimiento:</strong> {{ paciente.FechaNacimiento|date:"d/m/Y" }}</p>
+    <p><strong>Periodo del reporte:</strong> {{ periodo_inicio|date:"d/m/Y" }} - {{ periodo_fin|date:"d/m/Y" }}</p>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Trimestre</h2>
+    <div class="stats-grid">
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.total }}</div>
+        <div class="stats-label">Total Citas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.completadas }}</div>
+        <div class="stats-label">Completadas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.canceladas }}</div>
+        <div class="stats-label">Canceladas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.pendientes }}</div>
+        <div class="stats-label">Pendientes</div>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="quarterlyChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Año</h2>
+    <div class="stats-grid">
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_anio.total }}</div>
+        <div class="stats-label">Total Citas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_anio.completadas }}</div>
+        <div class="stats-label">Completadas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_anio.canceladas }}</div>
+        <div class="stats-label">Canceladas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_anio.pendientes }}</div>
+        <div class="stats-label">Pendientes</div>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="yearlyChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Médicos Consultados</h2>
+    <div class="doctor-list">
+      {% for medico in medicos_consultados %}
+      <div class="doctor-card">
+        <div class="doctor-avatar">
+          {{ medico.Nombre|slice:":1" }}
+        </div>
+        <div class="doctor-info">
+          <div class="doctor-name">{{ medico.Nombre }}</div>
+          <div class="doctor-specialty">{{ medico.Especialidad }}</div>
+        </div>
+        <div class="doctor-stats">
+          <div class="text-xl font-bold">{{ medico.num_citas }}</div>
+          <div class="text-sm">consultas</div>
+        </div>
+      </div>
+      {% empty %}
+      <p>No has consultado con ningún médico en el último año.</p>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Citas del Último Trimestre</h2>
+    <div class="appointments-list">
+      {% for cita in citas_ultimo_trimestre %}
+      <div class="appointment-card">
+        <div class="appointment-header">
+          <div class="appointment-date">{{ cita.FechaCita|date:"d/m/Y" }} a las {{ cita.HoraCita|time:"H:i" }}</div>
+          <div>
+            {% if cita.Estado == 'Pendiente' %}
+              <span class="badge badge-warning">Pendiente</span>
+            {% elif cita.Estado == 'Confirmada' %}
+              <span class="badge badge-success">Confirmada</span>
+            {% elif cita.Estado == 'Cancelada' %}
+              <span class="badge badge-error">Cancelada</span>
+            {% elif cita.Estado == 'Completada' %}
+              <span class="badge badge-info">Completada</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="appointment-doctor">
+          <strong>Médico:</strong> {{ cita.MedicoID.Nombre }} ({{ cita.MedicoID.Especialidad }})
+        </div>
+        <div class="appointment-type">
+          <strong>Tipo de consulta:</strong> {{ cita.MedioCita }}
+        </div>
+      </div>
+      {% empty %}
+      <p>No tienes citas en el último trimestre.</p>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Historia Clínica Reciente</h2>
+    <div class="table-responsive">
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th class="text-left p-2">Fecha</th>
+            <th class="text-left p-2">Médico</th>
+            <th class="text-left p-2">Especialidad</th>
+            <th class="text-left p-2">Diagnóstico</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for historia in historias_clinicas %}
+          <tr>
+            <td class="p-2">{{ historia.FechaConsulta|date:"d/m/Y" }}</td>
+            <td class="p-2">{{ historia.MedicoID.Nombre }}</td>
+            <td class="p-2">{{ historia.MedicoID.Especialidad }}</td>
+            <td class="p-2">{{ historia.Diagnostico|truncatechars:50 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="p-2 text-center">No hay registros clínicos disponibles</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock 'body' %}
+
+{% block 'scripts' %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('toggleDarkMode');
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', function() {
+        toggleTheme();
+      });
+    }
+    
+    // Gráfico de dona para estadísticas trimestrales
+    const quarterlyCtx = document.getElementById('quarterlyChart').getContext('2d');
+    new Chart(quarterlyCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Completadas', 'Canceladas', 'Pendientes', 'Confirmadas'],
+        datasets: [{
+          label: 'Citas del Último Trimestre',
+          data: [
+            {{ stats_trimestre.completadas }}, 
+            {{ stats_trimestre.canceladas }}, 
+            {{ stats_trimestre.pendientes }}, 
+            {{ stats_trimestre.confirmadas }}
+          ],
+          backgroundColor: [
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(255, 205, 86, 0.7)',
+            'rgba(153, 102, 255, 0.7)'
+          ],
+          borderColor: [
+            'rgb(75, 192, 192)',
+            'rgb(255, 99, 132)',
+            'rgb(255, 205, 86)',
+            'rgb(153, 102, 255)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'right',
+          }
+        }
+      }
+    });
+    
+    // Gráfico de barras para estadísticas anuales
+    const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
+    new Chart(yearlyCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Total', 'Completadas', 'Canceladas', 'Pendientes', 'Confirmadas'],
+        datasets: [{
+          label: 'Citas del Último Año',
+          data: [
+            {{ stats_anio.total }}, 
+            {{ stats_anio.completadas }}, 
+            {{ stats_anio.canceladas }}, 
+            {{ stats_anio.pendientes }}, 
+            {{ stats_anio.confirmadas }}
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(255, 99, 132, 0.5)',
+            'rgba(255, 205, 86, 0.5)',
+            'rgba(153, 102, 255, 0.5)'
+          ],
+          borderColor: [
+            'rgb(54, 162, 235)',
+            'rgb(75, 192, 192)',
+            'rgb(255, 99, 132)',
+            'rgb(255, 205, 86)',
+            'rgb(153, 102, 255)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock 'scripts' %} 

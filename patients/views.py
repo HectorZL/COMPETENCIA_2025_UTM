@@ -756,3 +756,157 @@ def cancelar_cita(request, id):
         messages.add_message(request, constants.ERROR, 'La cita no existe o no tienes permiso para cancelarla')
     
     return redirect('dashboard')
+
+@login_required
+def generate_doctor_report(request):
+    """
+    Genera un reporte para médicos sobre asistencia y cancelación de citas
+    """
+    if request.session.get('user_type') != 'Medico':
+        messages.add_message(request, constants.ERROR, 'Acceso denegado: solo médicos pueden ver este reporte')
+        return redirect('dashboard')
+    
+    medico_id = request.session.get('user_id')
+    medico = Medico.objects.get(MedicoID=medico_id)
+    
+    # Fechas para filtros
+    hoy = timezone.now().date()
+    hace_30_dias = hoy - timedelta(days=30)
+    hace_90_dias = hoy - timedelta(days=90)
+    
+    # Citas del último mes
+    citas_ultimo_mes = Cita.objects.filter(
+        MedicoID=medico,
+        FechaCita__gte=hace_30_dias,
+        FechaCita__lte=hoy
+    )
+    
+    # Citas del último trimestre
+    citas_ultimo_trimestre = Cita.objects.filter(
+        MedicoID=medico,
+        FechaCita__gte=hace_90_dias,
+        FechaCita__lte=hoy
+    )
+    
+    # Estadísticas de asistencia y cancelación
+    stats_mes = {
+        'total': citas_ultimo_mes.count(),
+        'completadas': citas_ultimo_mes.filter(Estado='Completada').count(),
+        'canceladas': citas_ultimo_mes.filter(Estado='Cancelada').count(),
+        'pendientes': citas_ultimo_mes.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_ultimo_mes.filter(Estado='Confirmada').count(),
+    }
+    
+    stats_trimestre = {
+        'total': citas_ultimo_trimestre.count(),
+        'completadas': citas_ultimo_trimestre.filter(Estado='Completada').count(),
+        'canceladas': citas_ultimo_trimestre.filter(Estado='Cancelada').count(),
+        'pendientes': citas_ultimo_trimestre.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_ultimo_trimestre.filter(Estado='Confirmada').count(),
+    }
+    
+    # Estadísticas por día de la semana
+    citas_por_dia = {}
+    for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']:
+        dia_index = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].index(dia)
+        citas_por_dia[dia] = {
+            'total': citas_ultimo_trimestre.filter(FechaCita__week_day=((dia_index + 2) % 7) or 7).count(),
+            'canceladas': citas_ultimo_trimestre.filter(
+                FechaCita__week_day=((dia_index + 2) % 7) or 7, 
+                Estado='Cancelada'
+            ).count()
+        }
+    
+    # Pacientes más frecuentes
+    pacientes_frecuentes = Paciente.objects.filter(
+        cita__MedicoID=medico,
+        cita__FechaCita__gte=hace_90_dias
+    ).annotate(
+        num_citas=Count('cita')
+    ).order_by('-num_citas')[:5]
+    
+    context = {
+        'medico': medico,
+        'stats_mes': stats_mes,
+        'stats_trimestre': stats_trimestre,
+        'citas_por_dia': citas_por_dia,
+        'pacientes_frecuentes': pacientes_frecuentes,
+        'periodo_inicio': hace_90_dias,
+        'periodo_fin': hoy
+    }
+    
+    return render(request, 'doctor_report.html', context)
+
+@login_required
+def generate_patient_report(request):
+    """
+    Genera un reporte para pacientes sobre sus consultas médicas
+    """
+    if request.session.get('user_type') != 'Paciente':
+        messages.add_message(request, constants.ERROR, 'Acceso denegado: solo pacientes pueden ver este reporte')
+        return redirect('dashboard')
+    
+    paciente_id = request.session.get('user_id')
+    paciente = Paciente.objects.get(PacienteID=paciente_id)
+    
+    # Fechas para filtros
+    hoy = timezone.now().date()
+    hace_90_dias = hoy - timedelta(days=90)
+    hace_365_dias = hoy - timedelta(days=365)
+    
+    # Citas del último trimestre
+    citas_ultimo_trimestre = Cita.objects.filter(
+        PacienteID=paciente,
+        FechaCita__gte=hace_90_dias,
+        FechaCita__lte=hoy
+    ).order_by('FechaCita')
+    
+    # Citas del último año
+    citas_ultimo_anio = Cita.objects.filter(
+        PacienteID=paciente,
+        FechaCita__gte=hace_365_dias,
+        FechaCita__lte=hoy
+    )
+    
+    # Estadísticas de asistencia y cancelación
+    stats_trimestre = {
+        'total': citas_ultimo_trimestre.count(),
+        'completadas': citas_ultimo_trimestre.filter(Estado='Completada').count(),
+        'canceladas': citas_ultimo_trimestre.filter(Estado='Cancelada').count(),
+        'pendientes': citas_ultimo_trimestre.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_ultimo_trimestre.filter(Estado='Confirmada').count(),
+    }
+    
+    stats_anio = {
+        'total': citas_ultimo_anio.count(),
+        'completadas': citas_ultimo_anio.filter(Estado='Completada').count(),
+        'canceladas': citas_ultimo_anio.filter(Estado='Cancelada').count(),
+        'pendientes': citas_ultimo_anio.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_ultimo_anio.filter(Estado='Confirmada').count(),
+    }
+    
+    # Médicos consultados
+    medicos_consultados = Medico.objects.filter(
+        cita__PacienteID=paciente,
+        cita__FechaCita__gte=hace_365_dias
+    ).annotate(
+        num_citas=Count('cita')
+    ).order_by('-num_citas')
+    
+    # Historia clínica
+    historias_clinicas = HistoriaClinica.objects.filter(
+        PacienteID=paciente
+    ).order_by('-FechaConsulta')[:10]
+    
+    context = {
+        'paciente': paciente,
+        'citas_ultimo_trimestre': citas_ultimo_trimestre,
+        'stats_trimestre': stats_trimestre,
+        'stats_anio': stats_anio,
+        'medicos_consultados': medicos_consultados,
+        'historias_clinicas': historias_clinicas,
+        'periodo_inicio': hace_365_dias,
+        'periodo_fin': hoy
+    }
+    
+    return render(request, 'patient_report.html', context)

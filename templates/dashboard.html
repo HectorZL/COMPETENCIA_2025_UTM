@@ -270,9 +270,7 @@
       {% endif %}
     </h2>
     
-    {% if request.session.user_type == 'Medico' %}
-    <a href="{% url 'dashboard' %}" class="btn btn-primary">+ Agregar Horario</a>
-    {% else %}
+    {% if request.session.user_type != 'Medico' %}
     <a href="{% url 'agendar_cita' %}" class="btn btn-primary">+ Solicitar Cita</a>
     {% endif %}
   </div>
@@ -326,7 +324,7 @@
             </tbody>
           </table>
           <div class="mt-4">
-            <a id="mostrarFormularioHorario" class="btn btn-primary" type="button" href="{% url  'agregar_horario_view'%}">Agregar Horario</a>
+            <button id="mostrarFormularioHorario" class="btn btn-primary" type="button">Agregar Horario</button>
           </div>
           
           <!-- Formulario para agregar/editar horarios -->
@@ -390,7 +388,7 @@
             </div>
           </div>
           <div class="mt-4">
-            <button class="btn btn-primary w-full">Generar Reporte</button>
+            <a href="{% url 'doctor_report' %}" class="btn btn-primary w-full">Generar Reporte</a>
           </div>
         </div>
       </div>
@@ -518,7 +516,7 @@
             </div>
           </div>
           <div class="mt-4">
-            <button class="btn btn-primary w-full">Generar Reporte</button>
+            <a href="{% url 'patient_report' %}" class="btn btn-primary w-full">Generar Reporte</a>
           </div>
         </div>
       </div>
@@ -617,6 +615,18 @@
   {% endif %}
 </div>
 
+<!-- Dark mode toggle -->
+<div class="fixed bottom-4 left-4 z-10">
+  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  </button>
+</div>
+
 <!-- Modal para ver detalles de cita -->
 <div id="modalVerCita" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -702,6 +712,24 @@
         formularioTitulo.textContent = 'Agregar Nuevo Horario';
         formularioHorario.classList.remove('hide');
         horarioForm.action = "{% url 'agregar_horario' %}";
+      });
+    }
+    
+    // Validar que la hora de fin sea exactamente 1 hora después de la hora de inicio
+    if (horaInicioInput && horaFinInput) {
+      horaInicioInput.addEventListener('change', function() {
+        if (this.value) {
+          // Obtener la hora inicio y setear la hora fin a 1 hora después
+          const horaInicio = new Date(`2000-01-01T${this.value}`);
+          const horaFin = new Date(horaInicio);
+          horaFin.setHours(horaInicio.getHours() + 1);
+          
+          // Formatear para el input time
+          let horasStr = horaFin.getHours().toString().padStart(2, '0');
+          let minutosStr = horaFin.getMinutes().toString().padStart(2, '0');
+          horaFinInput.value = `${horasStr}:${minutosStr}`;
+          horaFinInput.setAttribute('readonly', true);
+        }
       });
     }
     
@@ -919,6 +947,27 @@
     if (editMedico && editFecha) {
       editMedico.addEventListener('change', cargarHorasDisponiblesEdicion);
       editFecha.addEventListener('change', cargarHorasDisponiblesEdicion);
+    }
+    
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('toggleDarkMode');
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', function() {
+        // Toggle dark mode class on HTML element
+        document.documentElement.classList.toggle('dark');
+        
+        // Save preference to localStorage
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
+      });
+      
+      // Check for saved preference on load
+      const savedDarkMode = localStorage.getItem('darkMode');
+      if (savedDarkMode === 'true') {
+        document.documentElement.classList.add('dark');
+      } else if (savedDarkMode === 'false') {
+        document.documentElement.classList.remove('dark');
+      }
     }
   });
 </script>

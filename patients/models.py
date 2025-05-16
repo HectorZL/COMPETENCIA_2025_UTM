@@ -22,7 +22,18 @@ class Medico(models.Model):
 class HorarioMedico(models.Model):
     HorarioID = models.AutoField(primary_key=True)
     MedicoID = models.ForeignKey(Medico, on_delete=models.CASCADE)
-    DiaSemana = models.DateField()
+    DiaSemana = models.CharField(
+        max_length=10,
+        choices=[
+            ('Lunes', 'Lunes'),
+            ('Martes', 'Martes'),
+            ('Miércoles', 'Miércoles'),
+            ('Jueves', 'Jueves'),
+            ('Viernes', 'Viernes'),
+            ('Sábado', 'Sábado'),
+            ('Domingo', 'Domingo'),
+        ]
+    )
     HoraInicio = models.TimeField()
     HoraFin = models.TimeField()
 

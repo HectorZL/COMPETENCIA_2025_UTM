@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block 'head' %}
+<title>Reporte Médico</title>
+<style>
+  .report-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 2rem;
+  }
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .report-section {
+    background-color: var(--color-card-bg);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px var(--color-shadow);
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    transition: background-color 0.3s ease;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .stats-card {
+    background-color: var(--color-summary-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  .stats-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  .stats-label {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+  .chart-container {
+    height: 300px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .day-stats {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .day-card {
+    background-color: var(--color-summary-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  @media (max-width: 768px) {
+    .day-stats {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .table-responsive {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+  .fixed-bottom-left {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 100;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock 'head' %}
+
+{% block 'body' %}
+<!-- Dark mode toggle button -->
+<div class="fixed-bottom-left">
+  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  </button>
+</div>
+
+<div class="report-container">
+  <div class="report-header">
+    <h1 class="text-2xl font-bold">Reporte de Citas Médicas</h1>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Volver al Dashboard</a>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Información del Médico</h2>
+    <p><strong>Nombre:</strong> {{ medico.Nombre }}</p>
+    <p><strong>Especialidad:</strong> {{ medico.Especialidad }}</p>
+    <p><strong>Periodo del reporte:</strong> {{ periodo_inicio|date:"d/m/Y" }} - {{ periodo_fin|date:"d/m/Y" }}</p>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Mes</h2>
+    <div class="stats-grid">
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_mes.total }}</div>
+        <div class="stats-label">Total Citas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_mes.completadas }}</div>
+        <div class="stats-label">Completadas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_mes.canceladas }}</div>
+        <div class="stats-label">Canceladas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_mes.pendientes }}</div>
+        <div class="stats-label">Pendientes</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_mes.confirmadas }}</div>
+        <div class="stats-label">Confirmadas</div>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="monthlyChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Trimestre</h2>
+    <div class="stats-grid">
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.total }}</div>
+        <div class="stats-label">Total Citas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.completadas }}</div>
+        <div class="stats-label">Completadas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.canceladas }}</div>
+        <div class="stats-label">Canceladas</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.pendientes }}</div>
+        <div class="stats-label">Pendientes</div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-value">{{ stats_trimestre.confirmadas }}</div>
+        <div class="stats-label">Confirmadas</div>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="quarterlyChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Citas por Día de la Semana</h2>
+    <div class="day-stats">
+      {% for dia, stats in citas_por_dia.items %}
+      <div class="day-card">
+        <div class="stats-value">{{ stats.total }}</div>
+        <div class="stats-label">{{ dia }}</div>
+        <div class="text-sm text-red-500">{{ stats.canceladas }} canceladas</div>
+      </div>
+      {% endfor %}
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="weekdayChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Pacientes Más Frecuentes</h2>
+    <div class="table-responsive">
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th class="text-left p-2">Paciente</th>
+            <th class="text-left p-2">Citas</th>
+            <th class="text-left p-2">Última Cita</th>
+            <th class="text-left p-2">Completadas</th>
+            <th class="text-left p-2">Canceladas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for paciente in pacientes_frecuentes %}
+          <tr>
+            <td class="p-2">{{ paciente.Nombre }}</td>
+            <td class="p-2">{{ paciente.num_citas }}</td>
+            <td class="p-2">
+              {% with ultima_cita=paciente.cita_set.all|dictsort:"FechaCita"|last %}
+                {{ ultima_cita.FechaCita|date:"d/m/Y" }}
+              {% endwith %}
+            </td>
+            <td class="p-2">{{ paciente.cita_set.filter|dictsort:"Estado=Completada"|length }}</td>
+            <td class="p-2">{{ paciente.cita_set.filter|dictsort:"Estado=Cancelada"|length }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="p-2 text-center">No hay datos disponibles</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock 'body' %}
+
+{% block 'scripts' %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('toggleDarkMode');
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', function() {
+        toggleTheme();
+      });
+    }
+    
+    // Gráfico de barras para estadísticas mensuales
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Total', 'Completadas', 'Canceladas', 'Pendientes', 'Confirmadas'],
+        datasets: [{
+          label: 'Citas del Último Mes',
+          data: [
+            {{ stats_mes.total }}, 
+            {{ stats_mes.completadas }}, 
+            {{ stats_mes.canceladas }}, 
+            {{ stats_mes.pendientes }}, 
+            {{ stats_mes.confirmadas }}
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(255, 99, 132, 0.5)',
+            'rgba(255, 205, 86, 0.5)',
+            'rgba(153, 102, 255, 0.5)'
+          ],
+          borderColor: [
+            'rgb(54, 162, 235)',
+            'rgb(75, 192, 192)',
+            'rgb(255, 99, 132)',
+            'rgb(255, 205, 86)',
+            'rgb(153, 102, 255)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+    
+    // Gráfico de dona para estadísticas trimestrales
+    const quarterlyCtx = document.getElementById('quarterlyChart').getContext('2d');
+    new Chart(quarterlyCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Completadas', 'Canceladas', 'Pendientes', 'Confirmadas'],
+        datasets: [{
+          label: 'Citas del Último Trimestre',
+          data: [
+            {{ stats_trimestre.completadas }}, 
+            {{ stats_trimestre.canceladas }}, 
+            {{ stats_trimestre.pendientes }}, 
+            {{ stats_trimestre.confirmadas }}
+          ],
+          backgroundColor: [
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(255, 205, 86, 0.7)',
+            'rgba(153, 102, 255, 0.7)'
+          ],
+          borderColor: [
+            'rgb(75, 192, 192)',
+            'rgb(255, 99, 132)',
+            'rgb(255, 205, 86)',
+            'rgb(153, 102, 255)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'right',
+          }
+        }
+      }
+    });
+    
+    // Gráfico de líneas para citas por día de la semana
+    const weekdayCtx = document.getElementById('weekdayChart').getContext('2d');
+    new Chart(weekdayCtx, {
+      type: 'line',
+      data: {
+        labels: [
+          {% for dia in citas_por_dia.keys %}
+            '{{ dia }}',
+          {% endfor %}
+        ],
+        datasets: [{
+          label: 'Total Citas',
+          data: [
+            {% for dia, stats in citas_por_dia.items %}
+              {{ stats.total }},
+            {% endfor %}
+          ],
+          borderColor: 'rgb(54, 162, 235)',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          fill: true,
+          tension: 0.3
+        }, {
+          label: 'Canceladas',
+          data: [
+            {% for dia, stats in citas_por_dia.items %}
+              {{ stats.canceladas }},
+            {% endfor %}
+          ],
+          borderColor: 'rgb(255, 99, 132)',
+          backgroundColor: 'rgba(255, 99, 132, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock 'scripts' %} 
