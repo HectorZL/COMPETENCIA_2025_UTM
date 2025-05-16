@@ -5,58 +5,267 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <style>
-        /* Improved accessibility styles */
+        /* Modern CSS variables for theme switching */
         :root {
+            /* Typography */
             --text-base-size: 1.05rem;
             --text-line-height: 1.5;
             --heading-line-height: 1.3;
-            --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-family: 'Arial', 'Helvetica', sans-serif;
+            
+            /* Light theme colors */
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f9fafb;
+            --color-text-primary: #111827;
+            --color-text-secondary: #4b5563;
+            --color-border: #d1d5db;
+            --color-input-border: #cbd5e0;
+            --color-input-bg: #ffffff;
+            --color-accent: #4f46e5;
+            --color-accent-hover: #4338ca;
+            --color-shadow: rgba(0, 0, 0, 0.1);
+            --color-error: #ef4444;
+            --color-success: #10b981;
+            --color-btn-secondary-text: #4f46e5;
+            --color-btn-secondary-bg: #ffffff;
+            --color-btn-secondary-border: #4f46e5;
+            --color-btn-secondary-hover-bg: #f5f3ff;
+        }
+
+        /* Dark theme colors */
+        [data-theme="dark"] {
+            --color-bg-primary: #111827;
+            --color-bg-secondary: #1f2937;
+            --color-text-primary: #f9fafb;
+            --color-text-secondary: #d1d5db;
+            --color-border: #374151;
+            --color-input-border: #4b5563;
+            --color-input-bg: #1f2937;
+            --color-accent: #6366f1;
+            --color-accent-hover: #818cf8;
+            --color-shadow: rgba(0, 0, 0, 0.3);
+            --color-btn-secondary-text: #818cf8;
+            --color-btn-secondary-bg: #1f2937;
+            --color-btn-secondary-border: #6366f1;
+            --color-btn-secondary-hover-bg: #2e3c54;
         }
         
+        /* Apply colors based on system preference by default */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --color-bg-primary: #111827;
+                --color-bg-secondary: #1f2937;
+                --color-text-primary: #f9fafb;
+                --color-text-secondary: #d1d5db;
+                --color-border: #374151;
+                --color-input-border: #4b5563;
+                --color-input-bg: #1f2937;
+                --color-accent: #6366f1;
+                --color-accent-hover: #818cf8;
+                --color-shadow: rgba(0, 0, 0, 0.3);
+                --color-btn-secondary-text: #818cf8;
+                --color-btn-secondary-bg: #1f2937;
+                --color-btn-secondary-border: #6366f1;
+                --color-btn-secondary-hover-bg: #2e3c54;
+            }
+        }
+        
+        /* Global styles */
         html {
             font-size: var(--text-base-size);
             line-height: var(--text-line-height);
             font-family: var(--font-family);
+            text-transform: uppercase;
+        }
+        
+        body {
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         
         h1, h2, h3, h4, h5 {
             line-height: var(--heading-line-height);
             font-weight: 700;
+            color: var(--color-text-primary);
         }
         
         label, input, button, p, a, span {
             font-family: var(--font-family);
+            color: var(--color-text-primary);
         }
         
-        /* High contrast focus states */
+        /* Focus states */
         *:focus {
-            outline: 3px solid #4361ee !important;
+            outline: 3px solid var(--color-accent) !important;
             outline-offset: 2px !important;
         }
 
-        /* Increase contrast for text */
-        .text-gray-900 {
-            color: #111827 !important;
+        /* Form styling */
+        input {
+            border: 2px solid var(--color-input-border) !important;
+            background-color: var(--color-input-bg) !important;
+            color: var(--color-text-primary) !important;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
         }
         
-        .text-gray-600, .text-gray-500 {
-            color: #4B5563 !important;
+        input::placeholder {
+            color: var(--color-text-secondary) !important;
         }
         
+        /* Modern card styling */
+        .card {
+            background-color: var(--color-bg-primary);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px var(--color-shadow), 0 2px 4px -2px var(--color-shadow);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 15px -3px var(--color-shadow), 0 4px 6px -4px var(--color-shadow);
+            transform: translateY(-2px);
+        }
+        
+        /* Button styling */
+        .btn-primary {
+            background-color: var(--color-accent);
+            color: white;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--color-accent-hover);
+        }
+        
+        .btn-secondary {
+            background-color: var(--color-btn-secondary-bg);
+            color: var(--color-btn-secondary-text);
+            border: 2px solid var(--color-btn-secondary-border);
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--color-btn-secondary-hover-bg);
+        }
+        
+        /* Theme toggle styling */
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--color-bg-primary);
+            border: 2px solid var(--color-border);
+            border-radius: 9999px;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 2px 5px var(--color-shadow);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            border-color: var(--color-accent);
+        }
+        
+        .theme-toggle svg {
+            height: 1.25rem;
+            width: 1.25rem;
+            fill: var(--color-text-primary);
+        }
+        
+        /* Message styling */
+        .error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--color-error);
+            border: 1px solid var(--color-error);
+        }
+        
+        .success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+            border: 1px solid var(--color-success);
+        }
+
         /* Increased touch targets */
         button, a, input, select {
             min-height: 44px;
         }
         
         /* Proper link underlines */
-        a:not(.btn):not(.no-underline) {
+        a:not(.btn):not(.no-underline):not(.btn-primary):not(.btn-secondary) {
             text-decoration: underline;
             text-underline-offset: 0.2em;
         }
     </style>
+    <script>
+        // Function to set theme
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+        
+        // Function to toggle theme
+        function toggleTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            if (currentTheme === 'dark') {
+                setTheme('light');
+            } else if (currentTheme === 'light') {
+                setTheme('system');
+            } else {
+                setTheme('dark');
+            }
+            updateThemeToggleIcon();
+        }
+        
+        // Function to update the theme toggle icon
+        function updateThemeToggleIcon() {
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            const toggleIcon = document.getElementById('theme-toggle-icon');
+            
+            if (currentTheme === 'dark') {
+                toggleIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/></svg>`;
+            } else if (currentTheme === 'light') {
+                toggleIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/></svg>`;
+            } else {
+                toggleIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM12 13.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM3 12a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5H2.25A.75.75 0 013 12zM5.47 17.47a.75.75 0 001.06 0l1.59-1.591a.75.75 0 00-1.061-1.06l-1.59 1.59a.75.75 0 000 1.06zM18.53 17.47a.75.75 0 000-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591a.75.75 0 001.06 0zM5.47 6.53a.75.75 0 010-1.06l1.59-1.591a.75.75 0 011.061 1.06L6.53 6.53a.75.75 0 01-1.06 0zM18.53 6.53a.75.75 0 01-1.06 0l-1.59-1.591a.75.75 0 111.061-1.06l1.59 1.591a.75.75 0 010 1.06z"/></svg>`;
+            }
+        }
+        
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user has set a preference
+            const storedTheme = localStorage.getItem('theme');
+            
+            if (storedTheme) {
+                document.documentElement.setAttribute('data-theme', storedTheme);
+            } else {
+                // Check system preference
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    setTheme('dark');
+                } else {
+                    setTheme('light');
+                }
+            }
+            
+            // Update the toggle icon
+            updateThemeToggleIcon();
+        });
+    </script>
     {% block 'head' %}{% endblock 'head' %}
 </head>
 <body class="antialiased">
+    <!-- Theme toggle button -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span id="theme-toggle-icon">
+            <!-- Icon will be set by JS -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
+            </svg>
+        </span>
+    </button>
     {% block 'body' %}{% endblock 'body' %}
 </body>
 </html>
