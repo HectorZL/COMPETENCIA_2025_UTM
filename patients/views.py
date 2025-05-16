@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.db.models import Count, Q, Max, Subquery, OuterRef
 import re
 
+
 # Middleware para verificar autenticación
 def login_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -90,7 +91,6 @@ def register_view(request):
         paciente.save()
         
         messages.add_message(request, constants.SUCCESS, 'Registro exitoso! Ahora puedes iniciar sesión')
-        return redirect('login')
     
     # Si es GET, mostrar el formulario de registro
     return render(request, 'register.html')
@@ -238,8 +238,23 @@ def agendar_cita_view(request):
                 Estado='Pendiente'
             )
             cita.save()
-            
+
+            import smtplib, ssl
+
+            port = 465  # For SSL
+            password = 'wruh wlpz hrzb uvmg'
+
+            # Create a secure SSL context
+            context = ssl.create_default_context()
+            message = f"""\
+Subject: Confirmacion de cita medica
+
+Agendo una cita para el {fecha} a las {hora}."""
+            with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+                server.login("concursoutmprueba@gmail.com", password)
+                server.sendmail("concursoutmprueba@gmail.com", paciente.Email, message)
             messages.add_message(request, constants.SUCCESS, 'Cita agendada exitosamente')
+
             return redirect('dashboard')
             
         except Medico.DoesNotExist:
