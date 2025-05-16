@@ -21,4 +21,5 @@ urlpatterns = [
     path('public_consult/<int:id>/', views.public_consult, name='public_consult'),
     path('doctor-report/', views.generate_doctor_report, name='doctor_report'),
     path('patient-report/', views.generate_patient_report, name='patient_report'),
+    path('admin-report/', views.generate_admin_report, name='admin_report'),
 ]

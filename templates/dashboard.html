@@ -269,10 +269,6 @@
         Paciente
       {% endif %}
     </h2>
-    
-    {% if request.session.user_type != 'Medico' %}
-    <a href="{% url 'agendar_cita' %}" class="btn btn-primary">+ Solicitar Cita</a>
-    {% endif %}
   </div>
 
   {% if messages %}
@@ -388,7 +384,8 @@
             </div>
           </div>
           <div class="mt-4">
-            <a href="{% url 'doctor_report' %}" class="btn btn-primary w-full">Generar Reporte</a>
+            <a href="{% url 'doctor_report' %}" class="btn btn-primary mb-2 w-full">Generar Reporte Médico</a>
+            <a href="{% url 'admin_report' %}" class="btn btn-secondary w-full">Reporte Financiero</a>
           </div>
         </div>
       </div>
@@ -617,12 +614,9 @@
 
 <!-- Dark mode toggle -->
 <div class="fixed bottom-4 left-4 z-10">
-  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="theme-toggle-icon">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-    </svg>
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   </button>
 </div>
@@ -953,21 +947,8 @@
     const darkModeToggle = document.getElementById('toggleDarkMode');
     if (darkModeToggle) {
       darkModeToggle.addEventListener('click', function() {
-        // Toggle dark mode class on HTML element
-        document.documentElement.classList.toggle('dark');
-        
-        // Save preference to localStorage
-        const isDarkMode = document.documentElement.classList.contains('dark');
-        localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
+        toggleTheme();
       });
-      
-      // Check for saved preference on load
-      const savedDarkMode = localStorage.getItem('darkMode');
-      if (savedDarkMode === 'true') {
-        document.documentElement.classList.add('dark');
-      } else if (savedDarkMode === 'false') {
-        document.documentElement.classList.remove('dark');
-      }
     }
   });
 </script>

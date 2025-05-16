@@ -6,7 +6,7 @@ from .models import Medico, Paciente, Cita, HistoriaClinica, HorarioMedico
 from django.contrib import messages
 from django.contrib.messages import constants
 from django.urls import reverse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max, Subquery, OuterRef
 import re
 
 # Middleware para verificar autenticación
@@ -817,12 +817,21 @@ def generate_doctor_report(request):
             ).count()
         }
     
+    # Subconsulta para obtener la última cita de cada paciente
+    ultima_cita = Cita.objects.filter(
+        PacienteID=OuterRef('pk'),
+        MedicoID=medico
+    ).order_by('-FechaCita').values('FechaCita')[:1]
+    
     # Pacientes más frecuentes
     pacientes_frecuentes = Paciente.objects.filter(
         cita__MedicoID=medico,
         cita__FechaCita__gte=hace_90_dias
     ).annotate(
-        num_citas=Count('cita')
+        num_citas=Count('cita'),
+        completadas=Count('cita', filter=Q(cita__Estado='Completada')),
+        canceladas=Count('cita', filter=Q(cita__Estado='Cancelada')),
+        ultima_fecha_cita=Subquery(ultima_cita)
     ).order_by('-num_citas')[:5]
     
     context = {
@@ -885,21 +894,30 @@ def generate_patient_report(request):
         'confirmadas': citas_ultimo_anio.filter(Estado='Confirmada').count(),
     }
     
-    # Médicos consultados
+    # Médicos consultados con detalles adicionales
     medicos_consultados = Medico.objects.filter(
         cita__PacienteID=paciente,
         cita__FechaCita__gte=hace_365_dias
     ).annotate(
-        num_citas=Count('cita')
+        num_citas=Count('cita'),
+        completadas=Count('cita', filter=Q(cita__Estado='Completada')),
+        ultima_consulta=Max('cita__FechaCita')
     ).order_by('-num_citas')
     
     # Historia clínica
     historias_clinicas = HistoriaClinica.objects.filter(
         PacienteID=paciente
-    ).order_by('-FechaConsulta')[:10]
+    ).select_related('MedicoID').order_by('-FechaConsulta')[:10]
+    
+    # Datos adicionales del paciente
+    edad = None
+    if paciente.FechaNacimiento:
+        today = timezone.now().date()
+        edad = today.year - paciente.FechaNacimiento.year - ((today.month, today.day) < (paciente.FechaNacimiento.month, paciente.FechaNacimiento.day))
     
     context = {
         'paciente': paciente,
+        'edad': edad,
         'citas_ultimo_trimestre': citas_ultimo_trimestre,
         'stats_trimestre': stats_trimestre,
         'stats_anio': stats_anio,
@@ -910,3 +928,108 @@ def generate_patient_report(request):
     }
     
     return render(request, 'patient_report.html', context)
+
+@login_required
+def generate_admin_report(request):
+    """
+    Genera un reporte de ganancias para administradores
+    """
+    # En un sistema real, verificaríamos si el usuario es administrador
+    # Por ahora, permitimos acceso a médicos como si fueran admin
+    if request.session.get('user_type') != 'Medico':
+        messages.add_message(request, constants.ERROR, 'Acceso denegado: solo administradores pueden ver este reporte')
+        return redirect('dashboard')
+    
+    # Fechas para filtros
+    hoy = timezone.now().date()
+    ayer = hoy - timedelta(days=1)
+    inicio_semana = hoy - timedelta(days=hoy.weekday())
+    inicio_semana_anterior = inicio_semana - timedelta(days=7)
+    fin_semana_anterior = inicio_semana - timedelta(days=1)
+    inicio_mes = hoy.replace(day=1)
+    
+    if inicio_mes.month == 1:
+        inicio_mes_anterior = inicio_mes.replace(year=inicio_mes.year-1, month=12)
+    else:
+        inicio_mes_anterior = inicio_mes.replace(month=inicio_mes.month-1)
+    
+    fin_mes_anterior = inicio_mes - timedelta(days=1)
+    
+    # Ganancias por día
+    citas_hoy = Cita.objects.filter(FechaCita=hoy).exclude(Estado='Cancelada')
+    citas_ayer = Cita.objects.filter(FechaCita=ayer).exclude(Estado='Cancelada')
+    
+    # Ganancias por semana
+    citas_semana_actual = Cita.objects.filter(
+        FechaCita__gte=inicio_semana,
+        FechaCita__lte=hoy
+    ).exclude(Estado='Cancelada')
+    
+    citas_semana_anterior = Cita.objects.filter(
+        FechaCita__gte=inicio_semana_anterior,
+        FechaCita__lte=fin_semana_anterior
+    ).exclude(Estado='Cancelada')
+    
+    # Ganancias por mes
+    citas_mes_actual = Cita.objects.filter(
+        FechaCita__gte=inicio_mes,
+        FechaCita__lte=hoy
+    ).exclude(Estado='Cancelada')
+    
+    citas_mes_anterior = Cita.objects.filter(
+        FechaCita__gte=inicio_mes_anterior,
+        FechaCita__lte=fin_mes_anterior
+    ).exclude(Estado='Cancelada')
+    
+    # Cálculo de ganancias utilizando el campo Precio
+    ganancias_hoy = sum(cita.Precio for cita in citas_hoy)
+    ganancias_ayer = sum(cita.Precio for cita in citas_ayer)
+    
+    ganancias_semana_actual = sum(cita.Precio for cita in citas_semana_actual)
+    ganancias_semana_anterior = sum(cita.Precio for cita in citas_semana_anterior)
+    
+    ganancias_mes_actual = sum(cita.Precio for cita in citas_mes_actual)
+    ganancias_mes_anterior = sum(cita.Precio for cita in citas_mes_anterior)
+    
+    # Variación porcentual
+    variacion_diaria = ((ganancias_hoy - ganancias_ayer) / ganancias_ayer * 100) if ganancias_ayer > 0 else 0
+    variacion_semanal = ((ganancias_semana_actual - ganancias_semana_anterior) / ganancias_semana_anterior * 100) if ganancias_semana_anterior > 0 else 0
+    variacion_mensual = ((ganancias_mes_actual - ganancias_mes_anterior) / ganancias_mes_anterior * 100) if ganancias_mes_anterior > 0 else 0
+    
+    # Ganancias por médico
+    medicos = Medico.objects.all()
+    ganancias_por_medico = []
+    
+    for medico in medicos:
+        citas_medico = Cita.objects.filter(
+            MedicoID=medico,
+            FechaCita__gte=inicio_mes,
+            FechaCita__lte=hoy
+        ).exclude(Estado='Cancelada')
+        
+        ganancias = sum(cita.Precio for cita in citas_medico)
+        
+        ganancias_por_medico.append({
+            'medico': medico,
+            'ganancias': ganancias,
+            'num_citas': citas_medico.count()
+        })
+    
+    # Ordenar por ganancias
+    ganancias_por_medico.sort(key=lambda x: x['ganancias'], reverse=True)
+    
+    context = {
+        'ganancias_hoy': ganancias_hoy,
+        'ganancias_ayer': ganancias_ayer,
+        'ganancias_semana_actual': ganancias_semana_actual,
+        'ganancias_semana_anterior': ganancias_semana_anterior,
+        'ganancias_mes_actual': ganancias_mes_actual,
+        'ganancias_mes_anterior': ganancias_mes_anterior,
+        'variacion_diaria': variacion_diaria,
+        'variacion_semanal': variacion_semanal,
+        'variacion_mensual': variacion_mensual,
+        'ganancias_por_medico': ganancias_por_medico,
+        'fecha_generacion': hoy
+    }
+    
+    return render(request, 'admin_report.html', context)

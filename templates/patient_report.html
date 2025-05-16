@@ -142,34 +142,75 @@
     background-color: rgba(30, 64, 175, 0.2);
     color: #3b82f6;
   }
+  .btn-export {
+    background-color: var(--color-accent);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .btn-export:hover {
+    background-color: var(--color-accent-hover);
+  }
+  @media print {
+    body {
+      background-color: white !important;
+    }
+    .report-section {
+      break-inside: avoid;
+      background-color: white !important;
+      color: black !important;
+      box-shadow: none !important;
+    }
+    .fixed-bottom-left, .btn-export, a[href="{% url 'dashboard' %}"] {
+      display: none !important;
+    }
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 {% endblock 'head' %}
 
 {% block 'body' %}
 <!-- Dark mode toggle button -->
 <div class="fixed-bottom-left">
-  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="theme-toggle-icon">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-    </svg>
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   </button>
 </div>
 
-<div class="report-container">
+<div class="report-container" id="reportContainer">
   <div class="report-header">
     <h1 class="text-2xl font-bold">Mi Historial Médico</h1>
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Volver al Dashboard</a>
+    <div class="flex gap-4">
+      <button id="exportPdf" class="btn-export">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+        </svg>
+        Exportar a PDF
+      </button>
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary">Volver al Dashboard</a>
+    </div>
   </div>
   
   <div class="report-section">
     <h2 class="text-xl font-semibold mb-4">Información del Paciente</h2>
     <p><strong>Nombre:</strong> {{ paciente.Nombre }}</p>
     <p><strong>Email:</strong> {{ paciente.Email }}</p>
-    <p><strong>Fecha de Nacimiento:</strong> {{ paciente.FechaNacimiento|date:"d/m/Y" }}</p>
+    <p><strong>Teléfono:</strong> {{ paciente.Telefono|default:"No disponible" }}</p>
+    <p><strong>Género:</strong> {{ paciente.Genero|default:"No especificado" }}</p>
+    <p><strong>Fecha de Nacimiento:</strong> {{ paciente.FechaNacimiento|date:"d/m/Y"|default:"No disponible" }}</p>
+    {% if edad %}
+    <p><strong>Edad:</strong> {{ edad }} años</p>
+    {% endif %}
     <p><strong>Periodo del reporte:</strong> {{ periodo_inicio|date:"d/m/Y" }} - {{ periodo_fin|date:"d/m/Y" }}</p>
   </div>
   
@@ -240,6 +281,12 @@
         <div class="doctor-stats">
           <div class="text-xl font-bold">{{ medico.num_citas }}</div>
           <div class="text-sm">consultas</div>
+          {% if medico.completadas %}
+          <div class="text-sm text-green-600">{{ medico.completadas }} completadas</div>
+          {% endif %}
+          {% if medico.ultima_consulta %}
+          <div class="text-xs">Última: {{ medico.ultima_consulta|date:"d/m/Y" }}</div>
+          {% endif %}
         </div>
       </div>
       {% empty %}
@@ -405,6 +452,69 @@
           }
         }
       }
+    });
+
+    // Exportar a PDF 
+    const { jsPDF } = window.jspdf;
+    
+    document.getElementById('exportPdf').addEventListener('click', function() {
+      // Ocultar temporalmente los elementos que no deberían aparecer en el PDF
+      const darkModeToggle = document.querySelector('.fixed-bottom-left');
+      const exportButton = document.getElementById('exportPdf');
+      const dashboardLink = document.querySelector('a[href="{% url "dashboard" %}"]');
+      
+      darkModeToggle.style.display = 'none';
+      exportButton.style.display = 'none';
+      dashboardLink.style.display = 'none';
+      
+      // Configurar orientación apaisada (landscape) para tener más espacio
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const reportContainer = document.getElementById('reportContainer');
+      
+      html2canvas(reportContainer, {
+        scale: 1,
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true,
+        scrollY: -window.scrollY
+      }).then(canvas => {
+        // Add header
+        pdf.setFontSize(16);
+        pdf.text('Reporte Médico del Paciente', 105, 15, { align: 'center' });
+        pdf.setFontSize(12);
+        pdf.text('{{ paciente.Nombre }}', 105, 22, { align: 'center' });
+        pdf.setFontSize(10);
+        pdf.text('Generado el: ' + new Date().toLocaleDateString(), 105, 28, { align: 'center' });
+        
+        // Add the canvas as an image
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps= pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        let heightLeft = pdfHeight;
+        let position = 35; // start after the header
+        
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 10, position, pdfWidth, pdfHeight);
+        heightLeft -= (pdf.internal.pageSize.getHeight() - 40);
+        
+        // Add new pages as needed
+        while (heightLeft > 0) {
+          position = 10;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 10, position - pdfHeight + heightLeft, pdfWidth, pdfHeight);
+          heightLeft -= (pdf.internal.pageSize.getHeight() - 20);
+        }
+        
+        // Download the PDF
+        pdf.save('Reporte_Medico_{{ paciente.Nombre|slugify }}.pdf');
+        
+        // Restore hidden elements
+        darkModeToggle.style.display = '';
+        exportButton.style.display = '';
+        dashboardLink.style.display = '';
+      });
     });
   });
 </script>

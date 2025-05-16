@@ -101,6 +101,7 @@ class Cita(models.Model):
         ],
         default='Pendiente'
     )
+    Precio = models.DecimalField(max_digits=6, decimal_places=2, default=50.00, help_text="Precio en USD")
     FechaCreacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:

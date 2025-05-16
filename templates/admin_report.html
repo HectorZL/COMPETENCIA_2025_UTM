@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block 'head' %}
+<title>Reporte Financiero</title>
+<style>
+  .report-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 2rem;
+  }
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .report-section {
+    background-color: var(--color-card-bg);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px var(--color-shadow);
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    transition: background-color 0.3s ease;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .stats-card {
+    background-color: var(--color-summary-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+  }
+  .stats-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+  }
+  .stats-currency {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  .stats-label {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+  .variation {
+    font-size: 0.875rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
+  .variation-up {
+    color: #10b981;
+  }
+  .variation-down {
+    color: #ef4444;
+  }
+  .chart-container {
+    height: 300px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: repeat(1, 1fr);
+    }
+  }
+  .table-responsive {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+  .fixed-bottom-left {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 100;
+  }
+  
+  .btn-export {
+    background-color: var(--color-accent);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-export:hover {
+    background-color: var(--color-accent-hover);
+  }
+  
+  @media print {
+    body {
+      background-color: white !important;
+    }
+    .report-section {
+      break-inside: avoid;
+      background-color: white !important;
+      color: black !important;
+      box-shadow: none !important;
+    }
+    .fixed-bottom-left, .btn-export, a[href="{% url 'dashboard' %}"] {
+      display: none !important;
+    }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+{% endblock 'head' %}
+
+{% block 'body' %}
+<!-- Dark mode toggle button -->
+<div class="fixed-bottom-left">
+  <button id="toggleDarkMode" class="rounded-full p-2 bg-gray-200 dark:bg-gray-700 shadow-md text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="theme-toggle-icon">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  </button>
+</div>
+
+<div class="report-container" id="reportContainer">
+  <div class="report-header">
+    <h1 class="text-2xl font-bold">Reporte Financiero</h1>
+    <div class="flex gap-4">
+      <button id="exportPdf" class="btn-export">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+        </svg>
+        Exportar a PDF
+      </button>
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary">Volver al Dashboard</a>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Resumen Financiero</h2>
+    <p><strong>Fecha del reporte:</strong> {{ fecha_generacion|date:"d/m/Y" }}</p>
+    <p class="mb-4"><strong>Valor por cita:</strong> $50.00 USD</p>
+    
+    <div class="stats-grid">
+      <div class="stats-card">
+        <div class="stats-currency">USD</div>
+        <div class="stats-value">${{ ganancias_hoy|floatformat:2 }}</div>
+        <div class="stats-label">Ganancias Hoy</div>
+        {% if variacion_diaria > 0 %}
+        <div class="variation variation-up">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+          {{ variacion_diaria|floatformat:1 }}%
+        </div>
+        {% elif variacion_diaria < 0 %}
+        <div class="variation variation-down">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          {{ variacion_diaria|floatformat:1|abs }}%
+        </div>
+        {% else %}
+        <div class="variation">
+          0%
+        </div>
+        {% endif %}
+      </div>
+      
+      <div class="stats-card">
+        <div class="stats-currency">USD</div>
+        <div class="stats-value">${{ ganancias_semana_actual|floatformat:2 }}</div>
+        <div class="stats-label">Ganancias esta Semana</div>
+        {% if variacion_semanal > 0 %}
+        <div class="variation variation-up">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+          {{ variacion_semanal|floatformat:1 }}%
+        </div>
+        {% elif variacion_semanal < 0 %}
+        <div class="variation variation-down">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          {{ variacion_semanal|floatformat:1|abs }}%
+        </div>
+        {% else %}
+        <div class="variation">
+          0%
+        </div>
+        {% endif %}
+      </div>
+      
+      <div class="stats-card">
+        <div class="stats-currency">USD</div>
+        <div class="stats-value">${{ ganancias_mes_actual|floatformat:2 }}</div>
+        <div class="stats-label">Ganancias este Mes</div>
+        {% if variacion_mensual > 0 %}
+        <div class="variation variation-up">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+          {{ variacion_mensual|floatformat:1 }}%
+        </div>
+        {% elif variacion_mensual < 0 %}
+        <div class="variation variation-down">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          {{ variacion_mensual|floatformat:1|abs }}%
+        </div>
+        {% else %}
+        <div class="variation">
+          0%
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="comparativaChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Ganancias por Médico (Mes Actual)</h2>
+    <div class="table-responsive">
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th class="text-left p-2">Médico</th>
+            <th class="text-left p-2">Especialidad</th>
+            <th class="text-left p-2">Citas</th>
+            <th class="text-left p-2">Ganancias</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in ganancias_por_medico %}
+          <tr>
+            <td class="p-2">{{ item.medico.Nombre }}</td>
+            <td class="p-2">{{ item.medico.Especialidad }}</td>
+            <td class="p-2">{{ item.num_citas }}</td>
+            <td class="p-2">${{ item.ganancias|floatformat:2 }} USD</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="p-2 text-center">No hay datos disponibles</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="medicosChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="report-section">
+    <h2 class="text-xl font-semibold mb-4">Comparación de Ingresos</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <h3 class="text-lg font-medium mb-2">Comparación Diaria</h3>
+        <div class="stats-card">
+          <div class="stats-label">Hoy</div>
+          <div class="stats-value">${{ ganancias_hoy|floatformat:2 }}</div>
+        </div>
+        <div class="stats-card mt-2">
+          <div class="stats-label">Ayer</div>
+          <div class="stats-value">${{ ganancias_ayer|floatformat:2 }}</div>
+        </div>
+      </div>
+      
+      <div>
+        <h3 class="text-lg font-medium mb-2">Comparación Semanal</h3>
+        <div class="stats-card">
+          <div class="stats-label">Esta Semana</div>
+          <div class="stats-value">${{ ganancias_semana_actual|floatformat:2 }}</div>
+        </div>
+        <div class="stats-card mt-2">
+          <div class="stats-label">Semana Pasada</div>
+          <div class="stats-value">${{ ganancias_semana_anterior|floatformat:2 }}</div>
+        </div>
+      </div>
+      
+      <div class="col-span-2">
+        <h3 class="text-lg font-medium mb-2">Comparación Mensual</h3>
+        <div class="stats-card">
+          <div class="stats-label">Este Mes</div>
+          <div class="stats-value">${{ ganancias_mes_actual|floatformat:2 }}</div>
+        </div>
+        <div class="stats-card mt-2">
+          <div class="stats-label">Mes Pasado</div>
+          <div class="stats-value">${{ ganancias_mes_anterior|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock 'body' %}
+
+{% block 'scripts' %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('toggleDarkMode');
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', function() {
+        toggleTheme();
+      });
+    }
+    
+    // Gráfico comparativo
+    const comparativaCtx = document.getElementById('comparativaChart').getContext('2d');
+    new Chart(comparativaCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Diario', 'Semanal', 'Mensual'],
+        datasets: [{
+          label: 'Período Actual',
+          data: [
+            {{ ganancias_hoy }}, 
+            {{ ganancias_semana_actual }}, 
+            {{ ganancias_mes_actual }}
+          ],
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          borderColor: 'rgb(75, 192, 192)',
+          borderWidth: 1
+        }, {
+          label: 'Período Anterior',
+          data: [
+            {{ ganancias_ayer }}, 
+            {{ ganancias_semana_anterior }}, 
+            {{ ganancias_mes_anterior }}
+          ],
+          backgroundColor: 'rgba(54, 162, 235, 0.5)',
+          borderColor: 'rgb(54, 162, 235)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'USD'
+            }
+          }
+        }
+      }
+    });
+    
+    // Gráfico de médicos
+    const medicosCtx = document.getElementById('medicosChart').getContext('2d');
+    new Chart(medicosCtx, {
+      type: 'horizontalBar',
+      data: {
+        labels: [
+          {% for item in ganancias_por_medico %}
+            '{{ item.medico.Nombre }}',
+          {% endfor %}
+        ],
+        datasets: [{
+          label: 'Ganancias en USD',
+          data: [
+            {% for item in ganancias_por_medico %}
+              {{ item.ganancias }},
+            {% endfor %}
+          ],
+          backgroundColor: 'rgba(153, 102, 255, 0.5)',
+          borderColor: 'rgb(153, 102, 255)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        scales: {
+          x: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'USD'
+            }
+          }
+        }
+      }
+    });
+
+    // Exportar a PDF 
+    const { jsPDF } = window.jspdf;
+    
+    document.getElementById('exportPdf').addEventListener('click', function() {
+      // Ocultar temporalmente los elementos que no deberían aparecer en el PDF
+      const darkModeToggle = document.querySelector('.fixed-bottom-left');
+      const exportButton = document.getElementById('exportPdf');
+      const dashboardLink = document.querySelector('a[href="{% url "dashboard" %}"]');
+      
+      darkModeToggle.style.display = 'none';
+      exportButton.style.display = 'none';
+      dashboardLink.style.display = 'none';
+      
+      // Configurar orientación apaisada (landscape) para tener más espacio
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const reportContainer = document.getElementById('reportContainer');
+      
+      html2canvas(reportContainer, {
+        scale: 1,
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true,
+        scrollY: -window.scrollY
+      }).then(canvas => {
+        // Add header
+        pdf.setFontSize(16);
+        pdf.text('Reporte Financiero', 105, 15, { align: 'center' });
+        pdf.setFontSize(10);
+        pdf.text('Generado el: ' + new Date().toLocaleDateString(), 105, 22, { align: 'center' });
+        
+        // Add the canvas as an image
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps= pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        let heightLeft = pdfHeight;
+        let position = 28; // start after the header
+        
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 10, position, pdfWidth, pdfHeight);
+        heightLeft -= (pdf.internal.pageSize.getHeight() - 40);
+        
+        // Add new pages as needed
+        while (heightLeft > 0) {
+          position = 10;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 10, position - pdfHeight + heightLeft, pdfWidth, pdfHeight);
+          heightLeft -= (pdf.internal.pageSize.getHeight() - 20);
+        }
+        
+        // Download the PDF
+        pdf.save('Reporte_Financiero.pdf');
+        
+        // Restore hidden elements
+        darkModeToggle.style.display = '';
+        exportButton.style.display = '';
+        dashboardLink.style.display = '';
+      });
+    });
+  });
+</script>
+{% endblock 'scripts' %} 
