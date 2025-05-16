@@ -772,37 +772,39 @@ def generate_doctor_report(request):
     # Fechas para filtros
     hoy = timezone.now().date()
     hace_30_dias = hoy - timedelta(days=30)
+    dentro_30_dias = hoy + timedelta(days=30)  # Incluir 30 días futuros
     hace_90_dias = hoy - timedelta(days=90)
+    dentro_90_dias = hoy + timedelta(days=90)  # Incluir 90 días futuros
     
-    # Citas del último mes
-    citas_ultimo_mes = Cita.objects.filter(
+    # Citas del mes (30 días pasados y futuros)
+    citas_mes = Cita.objects.filter(
         MedicoID=medico,
         FechaCita__gte=hace_30_dias,
-        FechaCita__lte=hoy
+        FechaCita__lte=dentro_30_dias
     )
     
-    # Citas del último trimestre
-    citas_ultimo_trimestre = Cita.objects.filter(
+    # Citas del trimestre (90 días pasados y futuros)
+    citas_trimestre = Cita.objects.filter(
         MedicoID=medico,
         FechaCita__gte=hace_90_dias,
-        FechaCita__lte=hoy
+        FechaCita__lte=dentro_90_dias
     )
     
     # Estadísticas de asistencia y cancelación
     stats_mes = {
-        'total': citas_ultimo_mes.count(),
-        'completadas': citas_ultimo_mes.filter(Estado='Completada').count(),
-        'canceladas': citas_ultimo_mes.filter(Estado='Cancelada').count(),
-        'pendientes': citas_ultimo_mes.filter(Estado='Pendiente').count(),
-        'confirmadas': citas_ultimo_mes.filter(Estado='Confirmada').count(),
+        'total': citas_mes.count(),
+        'completadas': citas_mes.filter(Estado='Completada').count(),
+        'canceladas': citas_mes.filter(Estado='Cancelada').count(),
+        'pendientes': citas_mes.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_mes.filter(Estado='Confirmada').count(),
     }
     
     stats_trimestre = {
-        'total': citas_ultimo_trimestre.count(),
-        'completadas': citas_ultimo_trimestre.filter(Estado='Completada').count(),
-        'canceladas': citas_ultimo_trimestre.filter(Estado='Cancelada').count(),
-        'pendientes': citas_ultimo_trimestre.filter(Estado='Pendiente').count(),
-        'confirmadas': citas_ultimo_trimestre.filter(Estado='Confirmada').count(),
+        'total': citas_trimestre.count(),
+        'completadas': citas_trimestre.filter(Estado='Completada').count(),
+        'canceladas': citas_trimestre.filter(Estado='Cancelada').count(),
+        'pendientes': citas_trimestre.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_trimestre.filter(Estado='Confirmada').count(),
     }
     
     # Estadísticas por día de la semana
@@ -810,10 +812,14 @@ def generate_doctor_report(request):
     for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']:
         dia_index = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].index(dia)
         citas_por_dia[dia] = {
-            'total': citas_ultimo_trimestre.filter(FechaCita__week_day=((dia_index + 2) % 7) or 7).count(),
-            'canceladas': citas_ultimo_trimestre.filter(
+            'total': citas_trimestre.filter(FechaCita__week_day=((dia_index + 2) % 7) or 7).count(),
+            'canceladas': citas_trimestre.filter(
                 FechaCita__week_day=((dia_index + 2) % 7) or 7, 
                 Estado='Cancelada'
+            ).count(),
+            'pendientes': citas_trimestre.filter(
+                FechaCita__week_day=((dia_index + 2) % 7) or 7, 
+                Estado='Pendiente'
             ).count()
         }
     
@@ -826,11 +832,13 @@ def generate_doctor_report(request):
     # Pacientes más frecuentes
     pacientes_frecuentes = Paciente.objects.filter(
         cita__MedicoID=medico,
-        cita__FechaCita__gte=hace_90_dias
+        cita__FechaCita__gte=hace_90_dias,
+        cita__FechaCita__lte=dentro_90_dias
     ).annotate(
         num_citas=Count('cita'),
         completadas=Count('cita', filter=Q(cita__Estado='Completada')),
         canceladas=Count('cita', filter=Q(cita__Estado='Cancelada')),
+        pendientes=Count('cita', filter=Q(cita__Estado='Pendiente')),
         ultima_fecha_cita=Subquery(ultima_cita)
     ).order_by('-num_citas')[:5]
     
@@ -841,7 +849,7 @@ def generate_doctor_report(request):
         'citas_por_dia': citas_por_dia,
         'pacientes_frecuentes': pacientes_frecuentes,
         'periodo_inicio': hace_90_dias,
-        'periodo_fin': hoy
+        'periodo_fin': dentro_90_dias
     }
     
     return render(request, 'doctor_report.html', context)
@@ -861,46 +869,51 @@ def generate_patient_report(request):
     # Fechas para filtros
     hoy = timezone.now().date()
     hace_90_dias = hoy - timedelta(days=90)
+    dentro_90_dias = hoy + timedelta(days=90)  # Incluir 90 días futuros
     hace_365_dias = hoy - timedelta(days=365)
+    dentro_365_dias = hoy + timedelta(days=365)  # Incluir 365 días futuros
     
-    # Citas del último trimestre
-    citas_ultimo_trimestre = Cita.objects.filter(
+    # Citas del trimestre (90 días pasados y futuros)
+    citas_trimestre = Cita.objects.filter(
         PacienteID=paciente,
         FechaCita__gte=hace_90_dias,
-        FechaCita__lte=hoy
+        FechaCita__lte=dentro_90_dias
     ).order_by('FechaCita')
     
-    # Citas del último año
-    citas_ultimo_anio = Cita.objects.filter(
+    # Citas del año (365 días pasados y futuros)
+    citas_anio = Cita.objects.filter(
         PacienteID=paciente,
         FechaCita__gte=hace_365_dias,
-        FechaCita__lte=hoy
+        FechaCita__lte=dentro_365_dias
     )
     
     # Estadísticas de asistencia y cancelación
     stats_trimestre = {
-        'total': citas_ultimo_trimestre.count(),
-        'completadas': citas_ultimo_trimestre.filter(Estado='Completada').count(),
-        'canceladas': citas_ultimo_trimestre.filter(Estado='Cancelada').count(),
-        'pendientes': citas_ultimo_trimestre.filter(Estado='Pendiente').count(),
-        'confirmadas': citas_ultimo_trimestre.filter(Estado='Confirmada').count(),
+        'total': citas_trimestre.count(),
+        'completadas': citas_trimestre.filter(Estado='Completada').count(),
+        'canceladas': citas_trimestre.filter(Estado='Cancelada').count(),
+        'pendientes': citas_trimestre.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_trimestre.filter(Estado='Confirmada').count(),
     }
     
     stats_anio = {
-        'total': citas_ultimo_anio.count(),
-        'completadas': citas_ultimo_anio.filter(Estado='Completada').count(),
-        'canceladas': citas_ultimo_anio.filter(Estado='Cancelada').count(),
-        'pendientes': citas_ultimo_anio.filter(Estado='Pendiente').count(),
-        'confirmadas': citas_ultimo_anio.filter(Estado='Confirmada').count(),
+        'total': citas_anio.count(),
+        'completadas': citas_anio.filter(Estado='Completada').count(),
+        'canceladas': citas_anio.filter(Estado='Cancelada').count(),
+        'pendientes': citas_anio.filter(Estado='Pendiente').count(),
+        'confirmadas': citas_anio.filter(Estado='Confirmada').count(),
     }
     
     # Médicos consultados con detalles adicionales
     medicos_consultados = Medico.objects.filter(
         cita__PacienteID=paciente,
-        cita__FechaCita__gte=hace_365_dias
+        cita__FechaCita__gte=hace_365_dias,
+        cita__FechaCita__lte=dentro_365_dias
     ).annotate(
         num_citas=Count('cita'),
         completadas=Count('cita', filter=Q(cita__Estado='Completada')),
+        canceladas=Count('cita', filter=Q(cita__Estado='Cancelada')),
+        pendientes=Count('cita', filter=Q(cita__Estado='Pendiente')),
         ultima_consulta=Max('cita__FechaCita')
     ).order_by('-num_citas')
     
@@ -918,13 +931,13 @@ def generate_patient_report(request):
     context = {
         'paciente': paciente,
         'edad': edad,
-        'citas_ultimo_trimestre': citas_ultimo_trimestre,
+        'citas_ultimo_trimestre': citas_trimestre,
         'stats_trimestre': stats_trimestre,
         'stats_anio': stats_anio,
         'medicos_consultados': medicos_consultados,
         'historias_clinicas': historias_clinicas,
-        'periodo_inicio': hace_365_dias,
-        'periodo_fin': hoy
+        'periodo_inicio': hace_90_dias,
+        'periodo_fin': dentro_90_dias
     }
     
     return render(request, 'patient_report.html', context)

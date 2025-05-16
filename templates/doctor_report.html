@@ -152,7 +152,7 @@
   </div>
   
   <div class="report-section">
-    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Mes</h2>
+    <h2 class="text-xl font-semibold mb-4">Estadísticas del Mes (±30 días)</h2>
     <div class="stats-grid">
       <div class="stats-card">
         <div class="stats-value">{{ stats_mes.total }}</div>
@@ -182,7 +182,7 @@
   </div>
   
   <div class="report-section">
-    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Trimestre</h2>
+    <h2 class="text-xl font-semibold mb-4">Estadísticas del Trimestre (±90 días)</h2>
     <div class="stats-grid">
       <div class="stats-card">
         <div class="stats-value">{{ stats_trimestre.total }}</div>
@@ -219,6 +219,7 @@
         <div class="stats-value">{{ stats.total }}</div>
         <div class="stats-label">{{ dia }}</div>
         <div class="text-sm text-red-500">{{ stats.canceladas }} canceladas</div>
+        <div class="text-sm text-yellow-500">{{ stats.pendientes }} pendientes</div>
       </div>
       {% endfor %}
     </div>
@@ -239,6 +240,7 @@
             <th class="text-left p-2">Última Cita</th>
             <th class="text-left p-2">Completadas</th>
             <th class="text-left p-2">Canceladas</th>
+            <th class="text-left p-2">Pendientes</th>
           </tr>
         </thead>
         <tbody>
@@ -255,10 +257,11 @@
             </td>
             <td class="p-2">{{ paciente.completadas }}</td>
             <td class="p-2">{{ paciente.canceladas }}</td>
+            <td class="p-2">{{ paciente.pendientes }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="p-2 text-center">No hay datos disponibles</td>
+            <td colspan="6" class="p-2 text-center">No hay datos disponibles</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -393,6 +396,17 @@
           ],
           borderColor: 'rgb(255, 99, 132)',
           backgroundColor: 'rgba(255, 99, 132, 0.1)',
+          fill: true,
+          tension: 0.3
+        }, {
+          label: 'Pendientes',
+          data: [
+            {% for dia, stats in citas_por_dia.items %}
+              {{ stats.pendientes }},
+            {% endfor %}
+          ],
+          borderColor: 'rgb(255, 205, 86)',
+          backgroundColor: 'rgba(255, 205, 86, 0.1)',
           fill: true,
           tension: 0.3
         }]

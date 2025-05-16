@@ -215,7 +215,7 @@
   </div>
   
   <div class="report-section">
-    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Trimestre</h2>
+    <h2 class="text-xl font-semibold mb-4">Estadísticas de Citas (±90 días)</h2>
     <div class="stats-grid">
       <div class="stats-card">
         <div class="stats-value">{{ stats_trimestre.total }}</div>
@@ -241,7 +241,7 @@
   </div>
   
   <div class="report-section">
-    <h2 class="text-xl font-semibold mb-4">Estadísticas del Último Año</h2>
+    <h2 class="text-xl font-semibold mb-4">Estadísticas Anuales (±365 días)</h2>
     <div class="stats-grid">
       <div class="stats-card">
         <div class="stats-value">{{ stats_anio.total }}</div>
@@ -296,7 +296,7 @@
   </div>
   
   <div class="report-section">
-    <h2 class="text-xl font-semibold mb-4">Citas del Último Trimestre</h2>
+    <h2 class="text-xl font-semibold mb-4">Citas (Pasadas y Programadas)</h2>
     <div class="appointments-list">
       {% for cita in citas_ultimo_trimestre %}
       <div class="appointment-card">
@@ -377,7 +377,7 @@
       data: {
         labels: ['Completadas', 'Canceladas', 'Pendientes', 'Confirmadas'],
         datasets: [{
-          label: 'Citas del Último Trimestre',
+          label: 'Citas',
           data: [
             {{ stats_trimestre.completadas }}, 
             {{ stats_trimestre.canceladas }}, 
@@ -385,10 +385,10 @@
             {{ stats_trimestre.confirmadas }}
           ],
           backgroundColor: [
-            'rgba(75, 192, 192, 0.7)',
-            'rgba(255, 99, 132, 0.7)',
-            'rgba(255, 205, 86, 0.7)',
-            'rgba(153, 102, 255, 0.7)'
+            'rgba(75, 192, 192, 0.7)',  // Verde para completadas
+            'rgba(255, 99, 132, 0.7)',  // Rojo para canceladas
+            'rgba(255, 205, 86, 0.7)',  // Amarillo para pendientes
+            'rgba(153, 102, 255, 0.7)'  // Púrpura para confirmadas
           ],
           borderColor: [
             'rgb(75, 192, 192)',
@@ -416,7 +416,7 @@
       data: {
         labels: ['Total', 'Completadas', 'Canceladas', 'Pendientes', 'Confirmadas'],
         datasets: [{
-          label: 'Citas del Último Año',
+          label: 'Citas',
           data: [
             {{ stats_anio.total }}, 
             {{ stats_anio.completadas }}, 
@@ -425,11 +425,11 @@
             {{ stats_anio.confirmadas }}
           ],
           backgroundColor: [
-            'rgba(54, 162, 235, 0.5)',
-            'rgba(75, 192, 192, 0.5)',
-            'rgba(255, 99, 132, 0.5)',
-            'rgba(255, 205, 86, 0.5)',
-            'rgba(153, 102, 255, 0.5)'
+            'rgba(54, 162, 235, 0.5)',  // Azul para total
+            'rgba(75, 192, 192, 0.5)',  // Verde para completadas
+            'rgba(255, 99, 132, 0.5)',  // Rojo para canceladas
+            'rgba(255, 205, 86, 0.5)',  // Amarillo para pendientes
+            'rgba(153, 102, 255, 0.5)'  // Púrpura para confirmadas
           ],
           borderColor: [
             'rgb(54, 162, 235)',
