@@ -1,51 +1,99 @@
 from django.db import models
 from django.urls import reverse
 
-class Patients(models.Model):
-    conditions_choices = {
-        ('TDAH', 'TDAH'),
-        ('D', 'Depressão'),
-        ('A', 'Ansiedade'),
-        ('TAG', 'Transtoono de ansiedade generalizada'),
-    }
-
-    name = models.CharField(max_length=255)
-    email = models.EmailField()
-    phone = models.CharField(max_length=255, null=True, blank=True)
-    picture = models.ImageField(upload_to='pictures')
-    payments_status = models.BooleanField(default=True)
-    conditions = models.CharField(max_length=4, choices=conditions_choices)
+class Medico(models.Model):
+    MedicoID = models.AutoField(primary_key=True)
+    Nombre = models.CharField(max_length=255)
+    Especialidad = models.CharField(max_length=100, blank=True, null=True)
+    Email = models.EmailField(unique=True)
+    Telefono = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
-        return self.name
-    
-class Todos(models.Model):
-    choices_frequence = (
-        ('D', 'Diário'),
-        ('1S', '1 vez por semana'),
-        ('2S', '2 vezes por semana'),
-        ('3S', '3 vezes por semana'),
-        ('N', 'Ao necessiatr')
+        return self.Nombre
+
+class HorarioMedico(models.Model):
+    HorarioID = models.AutoField(primary_key=True)
+    MedicoID = models.ForeignKey(Medico, on_delete=models.CASCADE)
+    DiaSemana = models.CharField(
+        max_length=10,
+        choices=[
+            ('Lunes', 'Lunes'),
+            ('Martes', 'Martes'),
+            ('Miércoles', 'Miércoles'),
+            ('Jueves', 'Jueves'),
+            ('Viernes', 'Viernes'),
+            ('Sábado', 'Sábado'),
+            ('Domingo', 'Domingo'),
+        ]
     )
-    todo = models.CharField(max_length=255)
-    instrution = models.TextField()
-    frequence = models.CharField(max_length=2, choices=choices_frequence, default='D')
+    HoraInicio = models.TimeField()
+    HoraFin = models.TimeField()
+
+    class Meta:
+        unique_together = ('MedicoID', 'DiaSemana', 'HoraInicio') # Evita horarios duplicados
 
     def __str__(self):
-        return self.todo
-    
-class Consult(models.Model):
-    humor = models.PositiveIntegerField()
-    geral_register = models.TextField()
-    video = models.FileField(upload_to='video')
-    todo = models.ManyToManyField(Todos)
-    patient = models.ForeignKey(Patients, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+        return f"{self.MedicoID.Nombre} - {self.DiaSemana} ({self.HoraInicio}-{self.HoraFin})"
+
+class Paciente(models.Model):
+    PacienteID = models.AutoField(primary_key=True)
+    Nombre = models.CharField(max_length=255)
+    FechaNacimiento = models.DateField(blank=True, null=True)
+    Genero = models.CharField(
+        max_length=10,
+        choices=[
+            ('Masculino', 'Masculino'),
+            ('Femenino', 'Femenino'),
+            ('Otro', 'Otro'),
+        ],
+        blank=True,
+        null=True
+    )
+    Email = models.EmailField(unique=True)
+    Telefono = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
-        return self.patient.name
-    
-    @property
-    def link_publico(self):
-        return f"http://127.0.0.1:8000{reverse('public_consult', kwargs={'id': self.id})}"
-    
+        return self.Nombre
+
+class Cita(models.Model):
+    CitaID = models.AutoField(primary_key=True)
+    MedicoID = models.ForeignKey(Medico, on_delete=models.CASCADE)
+    PacienteID = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    FechaCita = models.DateField()
+    HoraCita = models.TimeField()
+    MedioCita = models.CharField(
+        max_length=10,
+        choices=[
+            ('Presencial', 'Presencial'),
+            ('Virtual', 'Virtual'),
+        ]
+    )
+    Estado = models.CharField(
+        max_length=10,
+        choices=[
+            ('Pendiente', 'Pendiente'),
+            ('Confirmada', 'Confirmada'),
+            ('Cancelada', 'Cancelada'),
+            ('Completada', 'Completada'),
+        ],
+        default='Pendiente'
+    )
+    FechaCreacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('MedicoID', 'FechaCita', 'HoraCita') # Evita citas duplicadas
+
+    def __str__(self):
+        return f"Cita {self.CitaID} - {self.PacienteID.Nombre} con {self.MedicoID.Nombre} el {self.FechaCita} a las {self.HoraCita}"
+
+class HistoriaClinica(models.Model):
+    HistoriaID = models.AutoField(primary_key=True)
+    PacienteID = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    FechaConsulta = models.DateTimeField(auto_now_add=True)
+    Diagnostico = models.TextField(blank=True, null=True)
+    Tratamiento = models.TextField(blank=True, null=True)
+    NotasAdicionales = models.TextField(blank=True, null=True)
+    MedicoID = models.ForeignKey(Medico, on_delete=models.SET_NULL, blank=True, null=True)
+
+    def __str__(self):
+        return f"Historia Clínica de {self.PacienteID.Nombre} - {self.FechaConsulta}"
