@@ -18,34 +18,30 @@ def login_view(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         user_type = request.POST.get('user_type')
-        
-        if user_type == 'Medico':
-            try:
-                user = Medico.objects.get(Email=email)
-                if user.check_password(password):
-                    request.session['user_id'] = user.MedicoID
-                    request.session['user_type'] = 'Medico'
-                    request.session['user_name'] = user.Nombre
-                    messages.add_message(request, constants.SUCCESS, 'Login exitoso!')
-                    return redirect('patients')
-                else:
-                    messages.add_message(request, constants.ERROR, 'Contraseña incorrecta!')
-            except Medico.DoesNotExist:
-                messages.add_message(request, constants.ERROR, 'El correo no existe!')
-        else:
-            try:
-                user = Paciente.objects.get(Email=email)
-                if user.check_password(password):
-                    request.session['user_id'] = user.PacienteID
-                    request.session['user_type'] = 'Paciente'
-                    request.session['user_name'] = user.Nombre
-                    messages.add_message(request, constants.SUCCESS, 'Login exitoso!')
-                    return redirect('patients')
-                else:
-                    messages.add_message(request, constants.ERROR, 'Contraseña incorrecta!')
-            except Paciente.DoesNotExist:
-                messages.add_message(request, constants.ERROR, 'El correo no existe!')
-    
+
+
+        try:
+            user = Medico.objects.get(Email=email)
+            if user.check_password(password):
+                request.session['user_id'] = user.MedicoID
+                request.session['user_type'] = 'Medico'
+                request.session['user_name'] = user.Nombre
+                messages.add_message(request, constants.SUCCESS, 'Login exitoso!')
+                return redirect('patients')
+            else:
+                messages.add_message(request, constants.ERROR, 'Contraseña incorrecta!')
+        except Medico.DoesNotExist:
+
+                try:
+                    user = Paciente.objects.get(Email=email)
+                    if user.check_password(password):
+                        request.session['user_id'] = user.PacienteID
+                        request.session['user_type'] = 'Paciente'
+                        request.session['user_name'] = user.Nombre
+                        messages.add_message(request, constants.SUCCESS, 'Login exitoso!')
+                        return redirect('patients')
+                except Paciente.DoesNotExist:
+                    messages.add_message(request, constants.ERROR, 'El correo no existe!')
     return render(request, 'login.html')
 
 def logout_view(request):
