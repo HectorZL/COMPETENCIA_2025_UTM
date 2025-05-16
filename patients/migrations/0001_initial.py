@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('phone', models.CharField(blank=True, max_length=255, null=True)),
                 ('picture', models.ImageField(upload_to='pictures')),
                 ('payments', models.BooleanField(default=True)),
-                ('conditions', models.CharField(choices=[('TAG', 'Transtoono de ansiedade generalizada'), ('A', 'Ansiedade'), ('D', 'Depressão'), ('TDAH', 'TDAH')], max_length=4)),
+                ('conditions', models.CharField(max_length=254)),
             ],
         ),
     ]
