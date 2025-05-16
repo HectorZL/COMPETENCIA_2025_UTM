@@ -70,14 +70,6 @@ def patient_view(request, id):
         messages.add_message(request, constants.SUCCESS, 'Registro de consulta agregado con exito.')
         return redirect(f'/patients/{id}')
 
-def upgrade_patient(request, id):
-    payments_status = request.POST.get('payments_status')
-    patient = Paciente.objects.get(id=id)
-    status = True if payments_status == 'Activo' else False
-    patient.payments_status = status
-    patient.save()
-
-    return redirect(f'/patients/{id}')
 
 def delete_consult(request, id):
     consult = Cita.objects.get(id=id)
@@ -87,6 +79,5 @@ def delete_consult(request, id):
 def public_consult(request, id):
     consults = Cita.objects.get(id=id)
     print(consults.link_publico)
-    if not consults.patient.payments_status:
-        raise Http404()
+
     return render(request, 'public_consult.html', {'consults': consults})
